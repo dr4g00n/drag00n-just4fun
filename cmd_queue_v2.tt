@@ -1,0 +1,78 @@
+#variable {mud_queue_file} {tintin_commands.txt}
+#variable {tintin_queue_file} {tintin_tin_commands.txt}
+#variable {mud_last_cmd} {}
+#variable {tintin_last_cmd} {}
+#variable {queue_check_interval} {3}
+#variable {queue_running} {0}
+
+/* 检查 MUD 命令队列 */
+#ALIAS check_mud_queue {
+    #script {raw} {cat $mud_queue_file};
+    #variable {cmd} {};
+    #foreach {$raw} {item} {
+        #if {"$item" != "{1}" && "$item" != "{2}" && "$item" != ""} {
+            #variable {cmd} {$item}
+        }
+    };
+    #if {"$cmd" != "" && "$cmd" != "$mud_last_cmd"} {
+        #variable {mud_last_cmd} {$cmd};
+        #showme <138>[AI] MUD命令: $cmd;
+        #send {$cmd}
+    }
+}
+
+/* 检查 tintin 命令队列 - 通过文件修改法 */
+#ALIAS check_tintin_queue {
+    #script {raw} {cat $tintin_queue_file};
+    #variable {cmd} {};
+    #foreach {$raw} {item} {
+        #if {"$item" != "{1}" && "$item" != "{2}" && "$item" != ""} {
+            #variable {cmd} {$item}
+        }
+    };
+    #if {"$cmd" != "" && "$cmd" != "$tintin_last_cmd"} {
+        #variable {tintin_last_cmd} {$cmd};
+        #showme <158>[AI] tintin命令: $cmd;
+        #showme <178>[调试] 即将读取tintin.tt;
+        #read tintin.tt;
+        #showme <178>[调试] tintin.tt读取完成
+    }
+}
+
+/* 同时检查两个队列 */
+#ALIAS check_queue {
+    check_mud_queue;
+    check_tintin_queue
+}
+
+#ALIAS queue_start {
+    #showme <138>[启动] 开始启动队列;
+    #variable {queue_running} {1};
+    #ticker {queue_check} {check_queue} {queue_check_interval};
+    #showme <158>[启动] 队列已启动，每$queue_check_interval秒检查一次
+}
+
+#ALIAS queue_stop {
+    #variable {queue_running} {0};
+    #unticker {queue_check};
+    #showme <158>[停止] 队列已停止
+}
+
+#ALIAS ai {
+    #if {"%0" == "status"} {
+        #showme <138>[状态] 队列: $queue_running
+    } {
+        #if {"%0" == "start"} {
+            queue_start
+        } {
+            #if {"%0" == "stop"} {
+                queue_stop
+            }
+        }
+    }
+}
+
+#showme <138>[加载] cmd_queue_v2.tt 已加载
+
+/* 自动启动队列 */
+queue_start

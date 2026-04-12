@@ -1,0 +1,3 @@
+/* 启动脚本 - 自动加载并启动所有系统 */
+#read main.tt
+ai start

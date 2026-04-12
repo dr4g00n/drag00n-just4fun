@@ -14,8 +14,15 @@
     #if {"$cmd" != "" && "$cmd" != "$queue_last_cmd"} {
         #variable {queue_last_cmd} {$cmd};
         #showme <158>[AI] 执行: $cmd;
-        #foreach {$cmd} {single_cmd} {
-            #send {$single_cmd}
+        /* 区分 tintin 命令和 MUD 命令 */
+        #showme <178>[调试] 命令: [$cmd];
+        #if {"$cmd" == "#%*"} {
+            #showme <158>[调试] 执行tintin命令;
+            /* 使用 #line substitute 执行 */
+            #line substitute {variables} {$cmd}
+        } {
+            #showme <138>[调试] 发送到MUD;
+            #send {$cmd}
         }
     }
 }
@@ -56,3 +63,6 @@
 }
 
 #showme <138>[加载] cmd_queue.tt 已加载
+
+/* 自动启动队列 */
+queue_start

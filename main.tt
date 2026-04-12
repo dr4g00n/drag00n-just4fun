@@ -11,8 +11,9 @@
 #config charset GBK1TOUTF8
 
 /* 加载子系统 */
-#read logger.tt
-#read cmd_queue.tt
+#read mapper.tt      /* 先加载 mapper，让它的 action 优先 */
+#read logger.tt      /* logger 的通用 action 放在后面 */
+#read cmd_queue_v2.tt
 #read dream.tt
 
 /* ============================================================ */
