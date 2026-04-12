@@ -1,0 +1,156 @@
+#variable {log_events} {1}
+#variable {event_history} {}
+#variable {max_history} {50}
+#variable {log_file} {tintin_log.txt}
+
+/* ============================================================ */
+/* 监控系统 - 让 Claude 能看到一切                               */
+/* ============================================================ */
+
+/* 启动监控 - 记录所有 I/O 到文件 */
+#ALIAS monitor_start {
+    #log append $log_file;
+    #format {now} {%Y-%m-%d %H:%M:%S};
+    #line log {$log_file} {========================================};
+    #line log {$log_file} {监控启动: $now};
+    #line log {$log_file} {========================================};
+    #showme <158>监控已启动，日志写入: $log_file
+}
+
+/* 停止监控 */
+#ALIAS monitor_stop {
+    #log off;
+    #showme <158>监控已停止
+}
+
+/* 查看实时日志文件 */
+#ALIAS catlog {
+    #system tail -20 $log_file
+}
+
+/* ============================================================ */
+/* 事件记录系统                                                  */
+/* ============================================================ */
+
+#ALIAS log_event {
+    #format {now} {%H:%M:%S};
+    #format {entry} {[%s] %s} {$now} {%0};
+    #list {event_history} {add} {$entry};
+    #if {"&event_history[]" > "$max_history"} {
+        #list {event_history} {delete} {1}
+    };
+    #line log {$log_file} {[事件] %0};
+    #if {"$log_events" == "1"} {
+        #showme <138>[日志] %0
+    }
+}
+
+/* ============================================================ */
+/* 日志控制命令                                                 */
+/* ============================================================ */
+
+#ALIAS log {
+    #if {"%0" == "clear"} {
+        #variable {event_history} {};
+        #showme <158>事件历史已清空
+    } {
+        #if {"%0" == "off"} {
+            #variable {log_events} {0};
+            #showme <158>实时输出已关闭
+        } {
+            #if {"%0" == "on"} {
+                #variable {log_events} {1};
+                #showme <158>实时输出已开启
+            } {
+                #showme <178>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━;
+                #showme <178>事件日志 (最近 &event_history[] 条);
+                #showme <178>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━;
+                #foreach {$event_history[]} {item} {
+                    #showme <168>  $item
+                };
+                #showme <178>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━;
+                #showme <178>提示: log on|off, log clear, catlog;
+                #showme <178>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            }
+        }
+    }
+}
+
+/* 调试命令 - 查看所有变量 */
+#ALIAS debug {
+    #format {now} {%H:%M:%S};
+    #line log {$log_file} {[$now] 调试信息};
+    #line log {$log_file} {  current_loc  = $current_loc};
+    #line log {$log_file} {  dream_target = $dream_target};
+    #line log {$log_file} {  log_events   = $log_events};
+    #line log {$log_file} {  历史条目数   = &event_history[]};
+    #showme <178>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━;
+    #showme <178>当前变量状态;
+    #showme <178>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━;
+    #showme <138>  current_loc  = $current_loc;
+    #showme <138>  dream_target = $dream_target;
+    #showme <138>  log_events   = $log_events;
+    #showme <138>  历史条目数   = &event_history[];
+    #showme <178>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+}
+
+/* ============================================================ */
+/* 捕获所有 MUD 输出                                            */
+/* ============================================================ */
+
+/* 捕获系统消息 */
+#action {^%1$} {
+    #line log {$log_file} {[MUD] %1}
+}
+
+/* 捕获传送相关 */
+#action {^一时间，你只觉眼皮沉重\.\.\.} {
+    #line log {$log_file} {[传送] 开始传送}
+}
+
+#action {^恍然间，你感觉云里雾里，身心飘到了另外一个地方} {
+    #if {"$dream_target" != ""} {
+        #line log {$log_file} {[传送] 成功: $dream_target};
+        log_event {传送成功: $dream_target};
+        #variable {dream_target} {}
+    } {
+        #line log {$log_file} {[传送] 未知来源}
+    }
+}
+
+/* 捕获位置变化 */
+#action {^%1 - %2$} {
+    #line log {$log_file} {[位置] %1 - %2};
+    log_event {位置: %1}
+}
+
+#action {^这里是%1} {
+    #line log {$log_file} {[位置] %1}
+}
+
+/* 捕获战斗/状态 */
+#action {^%1向你攻来！$} {
+    #line log {$log_file} {[战斗] %1 发起攻击}
+}
+
+#action {^你对%1使用了%2} {
+    #line log {$log_file} {[战斗] 你对 %1 使用 %2}
+}
+
+/* 捕获物品获取 */
+#action {^你得到%1} {
+    #line log {$log_file} {[物品] 获得: %1}
+}
+
+/* 捕获聊天消息 */
+#action {^%1说：%2} {
+    #line log {$log_file} {[聊天] %1: %2}
+}
+
+/* ============================================================ */
+/* 启动时自动开始监控                                            */
+/* ============================================================ */
+
+#event {PROGRAM START} {
+    monitor_start
+}

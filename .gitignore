@@ -1,0 +1,30 @@
+# 书剑 MUD Tintin++ 忽略文件
+
+# 包含敏感信息的登录配置
+login_private.tt
+sj-login-private.tt
+*_private.tt
+*.private
+
+# 临时文件
+*.log
+*.tmp
+*.bak
+*.swp
+*~
+
+# Tintin++ 生成的文件
+*.map
+*.session
+.tintin/
+
+# 测试文件
+test_*.tt
+test_*.txt
+
+# 个人笔记
+notes.md
+TODO.md
+
+# 大文件
+paths_all_original.tt
