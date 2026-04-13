@@ -2,15 +2,13 @@
 #variable {mud_port} {5555}
 #variable {current_loc} {}
 
-/* ============================================================ */
-/* 书剑 MUD 主入口文件                                             */
-/* ============================================================ */
-
 #config charset GBK1TOUTF8
 
-/* 加载子系统 */
-#read mapper.tt
-#read logger_working.tt
+#variable {current_room} {}
+#variable {current_room_exits} {}
+#variable {current_npcs} {}
+
+; 加载子系统
 #read cmd_queue_v2.tt
 #read login.tt
 
@@ -24,4 +22,107 @@
     load_credentials
 }
 
-monitor_start
+#ALIAS monitor_start {
+    #showme <158>监控已启动
+}
+
+#variable {temp_room} {}
+#variable {temp_exits} {}
+
+; 位置捕获 - 精确 room 名
+#action {武馆大门 -} {
+    #variable {temp_room} {武馆大门}
+}
+#action {青龙门内街 -} {
+    #variable {temp_room} {青龙门内街}
+}
+#action {青龙门 -} {
+    #variable {temp_room} {青龙门}
+}
+#action {南城巷 -} {
+    #variable {temp_room} {南城巷}
+}
+#action {武馆 -} {
+    #variable {temp_room} {武馆}
+}
+#action {练功房 -} {
+    #variable {temp_room} {练功房}
+}
+#action {大院 -} {
+    #variable {temp_room} {大院}
+}
+#action {东街 -} {
+    #variable {temp_room} {东街}
+}
+#action {西街 -} {
+    #variable {temp_room} {西街}
+}
+#action {南城巷 -} {
+    #variable {temp_room} {南城巷}
+}
+#action {北街 -} {
+    #variable {temp_room} {北街}
+}
+#action {南街 -} {
+    #variable {temp_room} {南街}
+}
+#action {广场 -} {
+    #variable {temp_room} {广场}
+}
+
+; 出口捕获
+#action {这里明显的出口是} {
+    #variable {temp_exits} {enter,south}
+}
+
+; NPC 捕获
+#action {◎(.+) \((.+)\)$} {
+    #list {current_npcs} {add} {%1(%2)};
+    #showme <138>[地图] NPC: %1(%2)
+}
+
+; 提示符时保存
+#action {^> $} {
+    #variable {current_room} {$temp_room};
+    #variable {current_room_exits} {$temp_exits}
+}
+
+#ALIAS map_info {
+    #showme <178>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━;
+    #showme <178>地图系统状态;
+    #showme <178>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━;
+    #showme <138>  当前房间: $current_room;
+    #showme <138>  当前出口: $current_room_exits;
+    #showme <138>  NPC数量: &current_npcs[];
+    #showme <178>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+}
+
+#ALIAS m_save {
+    #system printf '{"room":"%s","exits":"%s"}\n' "$current_room" "$current_room_exits" > map_data/$current_room.json
+}
+
+#ALIAS m_load {
+    #if {"$current_room" != ""} {
+        #script {data} {cat map_data/$current_room.json 2>/dev/null || echo '{}'};
+        #showme <138>[地图] 加载: $current_room
+    }
+}
+
+#ALIAS m_list {
+    #script {files} {ls map_data/*.txt 2>/dev/null | wc -l || echo 0};
+    #showme <138>[地图] 已保存 $files 个房间
+}
+
+#ALIAS map_init {
+    #script {result} {mkdir -p map_data 2>/dev/null || echo "ok"};
+    #showme <158>[地图] 初始化地图系统
+}
+
+#showme <158>[地图] 系统就绪
+#showme <138>[提示] 连接后输入 #mapper 加载地图捕获
+
+#ALIAS #mapper {
+    look
+}
+
+login

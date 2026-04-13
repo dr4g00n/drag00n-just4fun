@@ -4,25 +4,22 @@
 
 /* 读取 .env 文件获取登录凭据 */
 #ALIAS load_credentials {
-    #script {username} {source /Users/dr4/tintin/.env 2>/dev/null && echo "$MUD_USERNAME" || echo ""};
-    #script {password} {source /Users/dr4/tintin/.env 2>/dev/null && echo "$MUD_PASSWORD" || echo ""};
+    #script {username} {source /Users/dr4/tintin/.env 2>/dev/null; echo "$MUD_USERNAME"};
+    #script {password} {source /Users/dr4/tintin/.env 2>/dev/null; echo "$MUD_PASSWORD"};
 
-    #if {"$username[1]" == "" || "$username[1]" == "your_username_here"} {
-        #showme <168>[登录] 未配置 .env 文件，请手动登录
-    } {
-        #variable {mud_username} {$username[1]};
-        #variable {mud_password} {$password[1]};
-        #showme <138>[登录] 已加载凭据: $mud_username;
-        #showme <138>[登录] 用户名: $mud_username, 密码: $mud_password
-    }
+    #variable {mud_username} {$username[1]};
+    #variable {mud_password} {$password[1]};
+
+    #showme <138>[登录] 已加载凭据: $mud_username;
+    #showme <138>[登录] 用户名: $mud_username, 密码: $mud_password
 }
 
 /* 自动登录 - 发送用户名 */
 #action {^您的英文名字\(ID\)是：$} {
     #showme <138>[登录] 触发用户名输入;
     #if {"$mud_username" != ""} {
-        #showme <138>[登录] 发送用户名: {$mud_username};
-        #send {$mud_username};
+        #showme <138>[登录] 发送用户名: $mud_username;
+        #send $mud_username;
         #showme <138>[登录] 已发送
     }
 }
@@ -30,8 +27,8 @@
 #action {^请输入您的英文名字：$} {
     #showme <138>[登录] 触发旧版用户名输入;
     #if {"$mud_username" != ""} {
-        #showme <138>[登录] 发送用户名: {$mud_username};
-        #send {$mud_username};
+        #showme <138>[登录] 发送用户名: $mud_username;
+        #send $mud_username;
         #showme <138>[登录] 已发送
     }
 }
@@ -41,7 +38,7 @@
     #showme <138>[登录] 触发密码输入;
     #if {"$mud_password" != ""} {
         #showme <138>[登录] 发送密码;
-        #send {$mud_password};
+        #send $mud_password;
         #showme <138>[登录] 已发送密码
     }
 }
@@ -50,7 +47,7 @@
     #showme <138>[登录] 触发旧版密码输入;
     #if {"$mud_password" != ""} {
         #showme <138>[登录] 发送密码;
-        #send {$mud_password};
+        #send $mud_password;
         #showme <138>[登录] 已发送密码
     }
 }

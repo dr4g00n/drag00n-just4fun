@@ -1,65 +1,33 @@
 #variable {map_data_dir} {map_data}
 #variable {current_room} {}
-#variable {current_zone} {}
 #variable {current_room_exits} {}
 #variable {current_npcs} {}
-#variable {visited_rooms} {}
-
-/* ============================================================ */
-/* 地图系统 - 自动解析和记录房间信息                                */
-/* ============================================================ */
 
 #ALIAS map_init {
-    #script {result} {mkdir -p $map_data_dir 2>/dev/null || echo "ok"};
+    #script {result} {mkdir -p map_data 2>/dev/null || echo "ok"};
     #showme <158>[地图] 初始化地图系统
 }
 
-/* 捕获 NPC 信息 */
-#action {  (.+) \((.+)\)$} {
-    #if {"$current_room" != ""} {
-        #list {current_npcs} {add} {%1(%2)};
-        #showme <138>[地图] NPC: %1 (%2)
-    }
-}
-
-/* 捕获出口信息 */
-#action {    这里明显的出口是 (.+)\.$} {
-    #if {"$current_room" != ""} {
-        #variable {current_room_exits} {%1};
-        #showme <158>[地图] 出口: %1
-    }
-}
-
-/* 捕获房间信息 - 从 logger 的位置记录 */
-#action {[位置] (.+) -} {
+; 位置捕获
+#action {^(.+) -$} {
     #variable {current_room} {%1};
-    #showme <158>[地图] 进入: %1;
-
-    /* 重置NPC列表 */
-    #list {current_npcs} {clear};
-    #variable {current_room_exits} {};
-
-    /* 延迟保存，等待NPC和出口信息 */
-    #delay 1 {map_save_room}
+    #showme <158>[地图] 房间: %1
 }
 
-/* 保存房间信息到文件 */
-#ALIAS map_save_room {
-    #if {"$current_room" != ""} {
-        #format {now} {%Y-%m-%d %H:%M:%S};
-        #line log {$map_data_dir/$current_room.txt} {房间: $current_room};
-        #line log {$map_data_dir/$current_room.txt} {时间: $now};
-        #line log {$map_data_dir/$current_room.txt} {出口: $current_room_exits};
-        #foreach {$current_npcs[]} {npc} {
-            #line log {$map_data_dir/$current_room.txt} {NPC: $npc}
-        };
-        #line log {$map_data_dir/$current_room.txt} {---};
-        #showme <158>[地图] 已保存: $current_room
-    }
+; 出口捕获
+#action {^    这里明显的出口是 (.+)\.$} {
+    #variable {current_room_exits} {%1};
+    #showme <158>[地图] 出口: %1
 }
 
-/* 地图状态查看 */
-#ALIAS map_status {
+; NPC 捕获
+#action {^◎(.+) \((.+)\)$} {
+    #list {current_npcs} {add} {%1(%2)};
+    #showme <138>[地图] NPC: %1(%2)
+}
+
+; 地图命令
+#ALIAS map_info {
     #showme <178>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━;
     #showme <178>地图系统状态;
     #showme <178>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━;
@@ -69,11 +37,23 @@
     #showme <178>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 }
 
-/* 列出已保存的房间 */
-#ALIAS map_list {
-    #script {files} {ls $map_data_dir/*.txt 2>/dev/null | wc -l || echo 0};
+#ALIAS m_save {
+    #if {"$current_room" != ""} {
+        #format {now} {%Y-%m-%d %H:%M:%S};
+        #line log {map_data/$current_room.txt} {房间: $current_room};
+        #line log {map_data/$current_room.txt} {时间: $now};
+        #line log {map_data/$current_room.txt} {出口: $current_room_exits};
+        #foreach {$current_npcs[]} {npc} {
+            #line log {map_data/$current_room.txt} {NPC: $npc}
+        };
+        #line log {map_data/$current_room.txt} {---};
+        #showme <158>[地图] 已保存: $current_room
+    }
+}
+
+#ALIAS m_list {
+    #script {files} {ls map_data/*.txt 2>/dev/null | wc -l || echo 0};
     #showme <138>[地图] 已保存 $files 个房间
 }
 
-/* 自动初始化 */
 map_init
