@@ -9,7 +9,6 @@
 #variable {current_npcs} {}
 
 ; 加载子系统
-#read cmd_queue_v2.tt
 #read login.tt
 
 #ALIAS conn {
@@ -70,9 +69,9 @@
     #variable {temp_room} {广场}
 }
 
-; 出口捕获
-#action {这里明显的出口是} {
-    #variable {temp_exits} {enter,south}
+; 出口捕获 - 简单
+#action {这里明显的出口是 enter 和 south} {
+    #variable {current_room_exits} {enter 和 south}
 }
 
 ; NPC 捕获
@@ -83,8 +82,7 @@
 
 ; 提示符时保存
 #action {^> $} {
-    #variable {current_room} {$temp_room};
-    #variable {current_room_exits} {$temp_exits}
+    #variable {current_room} {$temp_room}
 }
 
 #ALIAS map_info {

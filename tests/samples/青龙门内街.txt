@@ -1,0 +1,4 @@
+青龙门内街 -
+    这里明显的出口是 east、north、south、west.
+◎老渔翁 (lao yu weng)
+◎小乞丐 (xiao qi gai)

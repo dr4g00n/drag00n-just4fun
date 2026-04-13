@@ -1,0 +1,3 @@
+广场 -
+    这里明显的出口是 north、south、east、west.
+◎武师 (wu shi)

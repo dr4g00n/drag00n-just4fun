@@ -5,7 +5,6 @@
 
 #read mapper.tt
 #read logger_v2.tt
-#read cmd_queue_v2.tt
 #read login.tt
 
 #ALIAS conn {
