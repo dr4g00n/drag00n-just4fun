@@ -1,0 +1,18 @@
+#!/usr/bin/expect --
+# Tintin++ 守护进程 - 使用 expect 伪终端运行 tt++
+# 用法: ./tintin_daemon.exp [命令]
+
+set timeout 30
+
+# 启动 tt++
+spawn /opt/homebrew/bin/tt++ main.tt
+
+# 等待 tt++ 启动
+expect {
+    timeout { puts "启动超时"; exit 1 }
+    eof { puts "TT++ 已退出"; exit 0 }
+    -re {.{0,}} {
+        # 收到任何输出，继续等待
+        exp_continue
+    }
+}

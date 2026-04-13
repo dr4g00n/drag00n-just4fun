@@ -1,16 +1,10 @@
 #variable {mud_host} {tj.sjever.net}
 #variable {mud_port} {5555}
-#variable {current_loc} {}
-
-/* ============================================================ */
-/* 书剑 MUD 主入口文件                                             */
-/* ============================================================ */
 
 #config charset GBK1TOUTF8
 
-/* 加载子系统 */
 #read mapper.tt
-#read logger_working.tt
+#read logger_v2.tt
 #read cmd_queue_v2.tt
 #read login.tt
 

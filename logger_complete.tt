@@ -1,0 +1,128 @@
+/* ============================================================ */
+/* 完整日志捕获系统 - 使用 action 捕获所有输出                      */
+/* ============================================================ */
+
+#variable {log_events} {1}
+#variable {event_history} {}
+#variable {max_history} {50}
+#variable {log_file} {tintin_log.txt}
+#variable {max_log_size} {1048576}
+#variable {capture_all} {1}
+
+/* 主日志记录函数 - 捕获所有输出 */
+#action {^(.+)$} {
+    #if {"$capture_all" == "1"} {
+        #line log {$log_file} {%0};
+        #line log {$log_file} {}
+    }
+}
+
+/* 但是上述方法会导致无限循环，所以需要分类捕获 */
+
+/* ============================================================ */
+/* 系统消息捕获                                                  */
+/* ============================================================ */
+
+#action {^#SESSION '(.+)'+ (.+)\.$} {
+    #line log {$log_file} {[SESSION] %1 %2}
+}
+
+#action {^#(.+)$} {
+    #line log {$log_file} {[系统] %1}
+}
+
+/* ============================================================ */
+/* MUD 输出捕获 - 按类型分类                                    */
+/* ============================================================ */
+
+/* 位置信息 */
+#action {^(.+) - (.+)$} {
+    #line log {$log_file} {[位置] %1 - %2};
+    log_event {位置: %1}
+}
+
+/* NPC 信息 */
+#action {^  (.+) \((.+)\)$} {
+    #line log {$log_file} {[NPC] %1(%2)}
+}
+
+/* 出口信息 */
+#action {^    这里明显的出口是 (.+)\.$} {
+    #line log {$log_file} {[出口] %1}
+}
+
+/* 房间描述 - 多行缩进文本 */
+#action {^    (.+)$} {
+    #line log {$log_file} {[描述] %1}
+}
+
+/* 其他单行输出 */
+#action {^(.+)$} {
+    #line log {$log_file} {[MUD] %1}
+}
+
+/* ============================================================ */
+/* 日志控制                                                      */
+/* ============================================================ */
+
+#ALIAS monitor_start {
+    #config charset GBK1TOUTF8;
+    #script {size} {wc -c $log_file 2>/dev/null | awk '{print $1}' || echo 0};
+    #if {"$size[1]" > "$max_log_size"} {
+        #script {truncate} {echo "" > $log_file};
+        #showme <138>[日志] 日志文件已清空（超过大小限制）
+    };
+    #script {now} {date "+%Y-%m-%d %H:%M:%S"};
+    #line log {$log_file} {========================================};
+    #line log {$log_file} {监控启动: $now[1]};
+    #line log {$log_file} {========================================};
+    #showme <158>监控已启动，完整捕获已启用
+}
+
+#ALIAS monitor_stop {
+    #variable {capture_all} {0};
+    #showme <158>监控已停止
+}
+
+#ALIAS catlog {
+    #system tail -100 $log_file
+}
+
+#ALIAS log_event {
+    #script {now} {date "+%H:%M:%S"};
+    #list {event_history} {add} {[$now[1]] %0};
+    #if {"&event_history[]" > "$max_history"} {
+        #list {event_history} {delete} {1}
+    };
+    #if {"$log_events" == "1"} {
+        #showme <138>[日志] %0
+    }
+}
+
+#ALIAS log {
+    #if {"%0" == "status"} {
+        #showme <178>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━;
+        #showme <178>日志系统状态;
+        #showme <178>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━;
+        #showme <138>  日志文件: $log_file;
+        #showme <138>  捕获模式: 完整捕获;
+        #showme <138>  事件开关: $log_events;
+        #showme <138>  历史条目: &event_history[];
+        #showme <178>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    } {
+        #if {"%0" == "clear"} {
+            #variable {event_history} {};
+            #showme <158>事件历史已清空
+        } {
+            #if {"%0" == "truncate"} {
+                #script {result} {echo "" > $log_file 2>/dev/null};
+                #showme <138>[日志] 日志文件已清空
+            }
+        }
+    }
+}
+
+/* 启动时自动开始监控 */
+#event {PROGRAM START} {
+    monitor_start
+}

@@ -2,30 +2,48 @@
 #variable {event_history} {}
 #variable {max_history} {50}
 #variable {log_file} {tintin_log.txt}
+#variable {max_log_size} {1048576}  /* 1MB = 1048576 bytes */
+#variable {logging_enabled} {0}
+
+/* ============================================================ */
+/* 日志系统启动 - 自动检查并限制日志大小                             */
+/* ============================================================ */
+
+#ALIAS monitor_start {
+    #config charset GBK1TOUTF8;
+
+    /* 检查日志文件大小，超过限制则清空 */
+    #script {size} {wc -c $log_file 2>/dev/null | awk '{print $1}' || echo 0};
+    #if {"$size[1]" > "$max_log_size"} {
+        #script {truncate} {echo "" > $log_file};
+        #showme <138>[日志] 日志文件已清空（超过大小限制）
+    };
+
+    #script {now} {date "+%Y-%m-%d %H:%M:%S"};
+    #line log {$log_file} {========================================};
+    #line log {$log_file} {监控启动: $now[1]};
+    #line log {$log_file} {========================================};
+    #showme <158>监控已启动，日志写入: $log_file;
+
+    /* 启用对所有 session 的日志记录 */
+    #log append $log_file;
+    #variable {logging_enabled} {1}
+}
 
 /* ============================================================ */
 /* 监控系统 - 让 Claude 能看到一切                               */
 /* ============================================================ */
 
-/* 启动监控 - 记录所有 I/O 到文件 */
-#ALIAS monitor_start {
-    #log append $log_file;
-    #format {now} {%Y-%m-%d %H:%M:%S};
-    #line log {$log_file} {========================================};
-    #line log {$log_file} {监控启动: $now};
-    #line log {$log_file} {========================================};
-    #showme <158>监控已启动，日志写入: $log_file
-}
-
 /* 停止监控 */
 #ALIAS monitor_stop {
     #log off;
+    #variable {logging_enabled} {0};
     #showme <158>监控已停止
 }
 
 /* 查看实时日志文件 */
 #ALIAS catlog {
-    #system tail -20 $log_file
+    #system tail -50 $log_file
 }
 
 /* ============================================================ */
@@ -33,9 +51,8 @@
 /* ============================================================ */
 
 #ALIAS log_event {
-    #format {now} {%H:%M:%S};
-    #format {entry} {[%s] %s} {$now} {%0};
-    #list {event_history} {add} {$entry};
+    #script {now} {date "+%H:%M:%S"};
+    #list {event_history} {add} {[$now[1]] %0};
     #if {"&event_history[]" > "$max_history"} {
         #list {event_history} {delete} {1}
     };
@@ -54,23 +71,39 @@
         #variable {event_history} {};
         #showme <158>事件历史已清空
     } {
-        #if {"%0" == "off"} {
-            #variable {log_events} {0};
-            #showme <158>实时输出已关闭
+        #if {"%0" == "truncate"} {
+            #script {result} {echo "" > $log_file 2>/dev/null && echo "ok" || echo "fail"};
+            #showme <138>[日志] 日志文件已清空
         } {
-            #if {"%0" == "on"} {
-                #variable {log_events} {1};
-                #showme <158>实时输出已开启
+            #if {"%0" == "off"} {
+                #variable {log_events} {0};
+                #showme <158>实时输出已关闭
             } {
-                #showme <178>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━;
-                #showme <178>事件日志 (最近 &event_history[] 条);
-                #showme <178>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━;
-                #foreach {$event_history[]} {item} {
-                    #showme <168>  $item
-                };
-                #showme <178>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━;
-                #showme <178>提示: log on|off, log clear, catlog;
-                #showme <178>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                #if {"%0" == "on"} {
+                    #variable {log_events} {1};
+                    #showme <158>实时输出已开启
+                } {
+                    #if {"%0" == "status"} {
+                        #showme <178>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━;
+                        #showme <178>日志系统状态;
+                        #showme <178>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━;
+                        #showme <138>  日志文件: $log_file;
+                        #showme <138>  日志启用: $logging_enabled;
+                        #showme <138>  事件开关: $log_events;
+                        #showme <138>  历史条目: &event_history[];
+                        #showme <178>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                    } {
+                        #showme <178>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━;
+                        #showme <178>事件日志 (最近 &event_history[] 条);
+                        #showme <178>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━;
+                        #foreach {$event_history[]} {item} {
+                            #showme <168>  $item
+                        };
+                        #showme <178>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━;
+                        #showme <178>提示: log on|off, log clear, log truncate, log status, catlog;
+                        #showme <178>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                    }
+                }
             }
         }
     }
@@ -78,8 +111,8 @@
 
 /* 调试命令 - 查看所有变量 */
 #ALIAS debug {
-    #format {now} {%H:%M:%S};
-    #line log {$log_file} {[$now] 调试信息};
+    #script {now} {date "+%H:%M:%S"};
+    #line log {$log_file} {[$now[1]] 调试信息};
     #line log {$log_file} {  current_loc  = $current_loc};
     #line log {$log_file} {  dream_target = $dream_target};
     #line log {$log_file} {  log_events   = $log_events};
@@ -95,15 +128,55 @@
 }
 
 /* ============================================================ */
-/* 捕获 MUD 输出 - 添加通用捕获但不使用通配符开头                 */
+/* Session 连接时确保日志启用                                      */
 /* ============================================================ */
 
-/* 通用输出捕获 - 使用行首缩进匹配 */
-#action {^  (.+)$} {
-    #line log {$log_file} {[MUD] %1}
+/* 当 session 连接成功时，确保日志记录已启用 */
+#action {^#SESSION '(.+)'+ CONNECTED TO} {
+    #if {"$logging_enabled" == "1"} {
+        #line log {$log_file} {[连接] Session %1 已连接};
+        #log append $log_file;
+        #showme <138>[日志] Session %1 日志记录已启用
+    }
 }
 
-/* 捕获传送相关 */
+/* 当 session 断开时记录 */
+#action {^#SESSION '(.+)'+ DIED\.} {
+    #line log {$log_file} {[连接] Session %1 已断开};
+    #showme <138>[日志] Session %1 已断开
+}
+
+/* 当 session 被激活时记录 */
+#action {^#SESSION '(.+)'+ ACTIVATED\.} {
+    #line log {$log_file} {[连接] Session %1 已激活}
+}
+
+/* ============================================================ */
+/* MUD 输出捕获 - 按优先级排序                                    */
+/* ============================================================ */
+
+/* 位置信息 - 最高优先级 */
+#action {^(.+) - (.+)$} {
+    #line log {$log_file} {[位置] %1 - %2};
+    log_event {位置: %1}
+}
+
+/* NPC 信息 */
+#action {^  (.+) \((.+)\)$} {
+    #line log {$log_file} {[NPC] %1(%2)}
+}
+
+/* 出口信息 */
+#action {^    这里明显的出口是 (.+)\.$} {
+    #line log {$log_file} {[出口] %1}
+}
+
+/* 房间描述 - 多行文本 */
+#action {^    (.+)$} {
+    #line log {$log_file} {[描述] %1}
+}
+
+/* 传送相关 */
 #action {^一时间，你只觉眼皮沉重\.\.\.} {
     #line log {$log_file} {[传送] 开始传送}
 }
@@ -118,17 +191,7 @@
     }
 }
 
-/* 捕获位置变化 */
-#action {^(.+) - (.+)$} {
-    #line log {$log_file} {[位置] %1 - %2};
-    log_event {位置: %1}
-}
-
-#action {^这里是(.+)} {
-    #line log {$log_file} {[位置] %1}
-}
-
-/* 捕获战斗/状态 */
+/* 战斗相关 */
 #action {^(.+)向你攻来！$} {
     #line log {$log_file} {[战斗] %1 发起攻击}
 }
@@ -137,14 +200,29 @@
     #line log {$log_file} {[战斗] 你对 %1 使用 %2}
 }
 
-/* 捕获物品获取 */
+/* 物品相关 */
 #action {^你得到(.+)} {
     #line log {$log_file} {[物品] 获得: %1}
 }
 
-/* 捕获聊天消息 */
+/* 聊天相关 */
 #action {^(.+)说：(.+)} {
     #line log {$log_file} {[聊天] %1: %2}
+}
+
+/* 系统消息 */
+#action {^【(.+)】(.+)$} {
+    #line log {$log_file} {[系统] %1: %2}
+}
+
+/* 提示符 */
+#action {^> $} {
+    #line log {$log_file} {[提示符]}
+}
+
+/* 兜底捕获 - 任何其他输出 */
+#action {^(.+)$} {
+    #line log {$log_file} {[输出] %1}
 }
 
 /* ============================================================ */

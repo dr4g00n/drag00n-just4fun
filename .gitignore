@@ -5,6 +5,7 @@ login_private.tt
 sj-login-private.tt
 *_private.tt
 *.private
+.env
 
 # 临时文件
 *.log

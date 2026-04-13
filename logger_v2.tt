@@ -1,0 +1,46 @@
+#variable {log_file} {tintin_log.txt}
+#variable {logging_enabled} {0}
+
+/* ============================================================ */
+/* 简化日志系统 - 使用 tintin++ 内置 log 功能                      */
+/* ============================================================ */
+
+#ALIAS monitor_start {
+    #config charset GBK1TOUTF8;
+    #script {now} {date "+%Y-%m-%d %H:%M:%S"};
+    #line log {$log_file} {========================================};
+    #line log {$log_file} {监控启动: $now[1]};
+    #line log {$log_file} {========================================};
+    #showme <158>监控已启动;
+
+    /* 对所有 session 启用日志记录 */
+    #log {all} append $log_file;
+    #variable {logging_enabled} {1};
+    #showme <138>[日志] 已对所有 session 启用日志记录
+}
+
+#ALIAS monitor_stop {
+    #log {all} off;
+    #variable {logging_enabled} {0};
+    #showme <158>监控已停止
+}
+
+#ALIAS catlog {
+    #system tail -100 $log_file
+}
+
+#ALIAS log {
+    #if {"%0" == "status"} {
+        #showme <178>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━;
+        #showme <178>日志系统状态;
+        #showme <178>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━;
+        #showme <138>  日志文件: $log_file;
+        #showme <138>  日志启用: $logging_enabled;
+        #showme <178>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    }
+}
+
+/* 启动时自动开始监控 */
+#event {PROGRAM START} {
+    monitor_start
+}

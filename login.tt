@@ -1,0 +1,77 @@
+/* ============================================================ */
+/* 自动登录系统 - 从 .env 文件读取凭据                             */
+/* ============================================================ */
+
+/* 读取 .env 文件获取登录凭据 */
+#ALIAS load_credentials {
+    #script {username} {source /Users/dr4/tintin/.env 2>/dev/null && echo "$MUD_USERNAME" || echo ""};
+    #script {password} {source /Users/dr4/tintin/.env 2>/dev/null && echo "$MUD_PASSWORD" || echo ""};
+
+    #if {"$username[1]" == "" || "$username[1]" == "your_username_here"} {
+        #showme <168>[登录] 未配置 .env 文件，请手动登录
+    } {
+        #variable {mud_username} {$username[1]};
+        #variable {mud_password} {$password[1]};
+        #showme <138>[登录] 已加载凭据: $mud_username;
+        #showme <138>[登录] 用户名: $mud_username, 密码: $mud_password
+    }
+}
+
+/* 自动登录 - 发送用户名 */
+#action {^您的英文名字\(ID\)是：$} {
+    #showme <138>[登录] 触发用户名输入;
+    #if {"$mud_username" != ""} {
+        #showme <138>[登录] 发送用户名: {$mud_username};
+        #send {$mud_username};
+        #showme <138>[登录] 已发送
+    }
+}
+
+#action {^请输入您的英文名字：$} {
+    #showme <138>[登录] 触发旧版用户名输入;
+    #if {"$mud_username" != ""} {
+        #showme <138>[登录] 发送用户名: {$mud_username};
+        #send {$mud_username};
+        #showme <138>[登录] 已发送
+    }
+}
+
+/* 自动登录 - 发送密码 */
+#action {^请您输入这个人物的识别密码\(passwd\)：$} {
+    #showme <138>[登录] 触发密码输入;
+    #if {"$mud_password" != ""} {
+        #showme <138>[登录] 发送密码;
+        #send {$mud_password};
+        #showme <138>[登录] 已发送密码
+    }
+}
+
+#action {^请输入您的密码：$} {
+    #showme <138>[登录] 触发旧版密码输入;
+    #if {"$mud_password" != ""} {
+        #showme <138>[登录] 发送密码;
+        #send {$mud_password};
+        #showme <138>[登录] 已发送密码
+    }
+}
+
+#action {^请输入您的密码：$} {
+    #showme <138>[登录] 触发旧版密码输入;
+    #if {"$mud_password" != ""} {
+        #showme <138>[登录] 发送密码;
+        #send $mud_password;
+        #showme <138>[登录] 已发送密码
+    }
+}
+
+/* 自动回复 BIG5 字体询问 */
+#action {^Are you using BIG5 font\(y/N\)\?$} {
+    #showme <138>[登录] 检测到字体询问;
+    #send N;
+    #showme <138>[登录] 已回复 N
+}
+
+/* 自动回复"重新选择ID"提示 */
+#action {^英文 ID 已经存在，请输入密码或者直接回车重新选择 ID\.$} {
+    #showme <138>[登录] 检测到重新选择提示
+}
