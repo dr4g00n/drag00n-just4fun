@@ -14,7 +14,9 @@
 | 胶囊 | 关键词 | 一句话结论 |
 |------|--------|-----------|
 | [tintin++-macos-testing](capsules/tintin++-macos-testing.md) | tt++ 测试、自动化测试、mock server、tmux | tt++ 没有 headless 模式，测试必须走 tmux + Python mock TCP server + `SESSION DISCONNECTED` 事件 |
-| [tintin++-regex-syntax](capsules/tintin++-regex-syntax.md) | tt++ 正则、action、分组、中文匹配、转义 | 分组用 `{}` 不是 `()`，前导空格被 strip，shell 中需要双重转义 |
+| [tintin++-regex-syntax](capsules/tintin++-regex-syntax.md) | tt++ 正则、action、分组、中文匹配、转义、NPC | 分组用 `{}` 不是 `()`，前导空格被 strip，NPC 格式不固定，action 顺序影响匹配 |
+| [tintin++-mud-display-modes](capsules/tintin++-mud-display-modes.md) | MUD 显示模式、brief、完整模式、移动、look、NPC 格式 | 移动时 brief 模式（房间+出口同行、NPC 无 ◎），look 时完整模式（分多行、NPC 有 ◎），action 必须同时覆盖 |
+| [tintin++-test-framework](capsules/tintin++-test-framework.md) | 测试框架、mock server、测试样本、run_all_tests | 统一测试架构：mock server + tt++ session + shell 断言 |
 
 ## 新增胶囊
 

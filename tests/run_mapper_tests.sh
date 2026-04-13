@@ -1,28 +1,22 @@
 #!/usr/bin/env bash
 # Mapper 正则测试运行器
-# 用法: ./tests/run_mapper_tests.sh [样本目录]
-#
-# 原理：
-#   1. Python mock server 监听端口，发送 MUD 样本数据
-#   2. tt++ 连接 mock server，action 触发后设置变量
-#   3. session 断开时 SESSION DISCONNECTED 事件写出变量到文件
-#   4. shell 脚本断言变量值是否正确
+# 用法: ./tests/run_mapper_tests.sh
 
-set -euo pipefail
+set -eo pipefail
 
 TT_BIN="/opt/homebrew/bin/tt++"
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 TEST_DIR="$PROJECT_DIR/tests"
 SAMPLES_DIR="${1:-$TEST_DIR/samples/mapper}"
 MOCK_SERVER="$TEST_DIR/mock_mud_server.py"
-WORK_DIR="/tmp/tt_mapper_tests"
+RESULT_DIR="/tmp/tt_mapper_tests"
 
 PASS=0
 FAIL=0
 TOTAL=0
 
-rm -rf "$WORK_DIR"
-mkdir -p "$WORK_DIR"
+rm -rf "$RESULT_DIR"
+mkdir -p "$RESULT_DIR"
 
 BASE_PORT=20300
 
@@ -71,30 +65,56 @@ run_test() {
     local name="$1"
     local sample_file="$2"
     local port="$3"
-    local result_file="$WORK_DIR/${name}.txt"
-    local ready_file="$WORK_DIR/${name}_ready.txt"
-    local tt_file="$WORK_DIR/${name}.tt"
+    local result_file="$RESULT_DIR/${name}.txt"
+    local ready_file="$RESULT_DIR/${name}_ready.txt"
+    local tt_file="$RESULT_DIR/${name}.tt"
 
     TOTAL=$((TOTAL + 1))
 
-    cat > "$tt_file" << EOF
+    # 生成 tt++ 测试脚本（支持 brief 和完整模式）
+    cat > "$tt_file" << 'TTEOF'
 #config charset UTF-8
+
 #variable {current_room} {NOT_SET}
 #variable {current_room_exits} {NOT_SET}
+#variable {current_room_exits_brief} {NOT_SET}
 #variable {current_npcs} {}
-#action {^{.+} -\$} {
+
+#action {^{.+} - {.+}$} {
+    #variable {current_room} {%1};
+    #variable {current_room_exits_brief} {%2}
+}
+
+#action {^{.+} -$} {
     #variable {current_room} {%1}
 }
-#action {^这里明显的出口是 {.+}\\.\$} {
+
+#action {^这里明显的出口是 {.+}\.$} {
     #variable {current_room_exits} {%1}
 }
-#action {^◎{.+} \\({.+}\\)\$} {
+
+#action {^◎{.+} \({.+}\)$} {
     #list {current_npcs} {add} {%1(%2)}
 }
+
+#action {^  {.+} \({.+}\)$} {
+    #list {current_npcs} {add} {%1(%2)}
+}
+
+TTEOF
+
+    # 需要动态插入端口和结果文件路径，用 sed 替换
+    cat >> "$tt_file" << EOF
 #session test 127.0.0.1 ${port}
+
 #event {SESSION DISCONNECTED} {
-    #system {echo "current_room=\$current_room" > ${result_file}};
-    #system {echo "current_room_exits=\$current_room_exits" >> ${result_file}};
+    #if {"\$current_room_exits_brief" != "NOT_SET"} {
+        #system {echo "current_room=\$current_room" > ${result_file}};
+        #system {echo "current_room_exits=\$current_room_exits_brief" >> ${result_file}}
+    } {
+        #system {echo "current_room=\$current_room" > ${result_file}};
+        #system {echo "current_room_exits=\$current_room_exits" >> ${result_file}}
+    };
     #system {echo "current_npcs=\$current_npcs" >> ${result_file}};
     #system {echo "DONE" >> ${result_file}};
     #end
@@ -103,41 +123,46 @@ EOF
 
     rm -f "$ready_file" "$result_file"
 
+    # 启动 mock server
     python3 "$MOCK_SERVER" "$port" "$sample_file" "$ready_file" &
     local mock_pid=$!
 
+    # 等待 server 就绪
     if ! wait_for_server "$ready_file"; then
         kill "$mock_pid" 2>/dev/null
-        echo "  ✗ $name: mock server 超时"
+        echo "  ✗ $name: mock server 启动超时"
         FAIL=$((FAIL + 1))
         return
     fi
 
-    tmux new-session -d -s "t_${name}" "$TT_BIN $tt_file" 2>&1 || true
+    # 启动 tt++
+    tmux new-session -d -s "tt_${name}" "$TT_BIN $tt_file" 2>&1 || true
     sleep 6
 
-    tmux kill-session -t "t_${name}" 2>/dev/null || true
+    # 清理
+    tmux kill-session -t "tt_${name}" 2>/dev/null || true
     kill "$mock_pid" 2>/dev/null || true
     wait "$mock_pid" 2>/dev/null || true
 
+    # 验证结果
     if [ ! -f "$result_file" ] || ! grep -q "DONE" "$result_file"; then
         echo "  ✗ $name: 测试未完成"
         FAIL=$((FAIL + 1))
+        cat "$result_file" 2>/dev/null | sed 's/^/      /'
         return
     fi
 
     local test_fail=0
+    local room exits npcs
 
-    # 断言房间名不为 NOT_SET
-    local room
+    # 断言房间名
     room=$(get_var "$result_file" "current_room")
     if [ "$room" = "NOT_SET" ] || [ -z "$room" ]; then
         echo "      房间名未捕获"
         test_fail=1
     fi
 
-    # 断言出口不为 NOT_SET（样本文件都有出口行）
-    local exits
+    # 断言出口（brief 或完整模式）
     exits=$(get_var "$result_file" "current_room_exits")
     if [ "$exits" = "NOT_SET" ] || [ -z "$exits" ]; then
         echo "      出口未捕获"
@@ -149,7 +174,6 @@ EOF
         echo "  ✓ $name"
         echo "      房间: $room"
         echo "      出口: $exits"
-        local npcs
         npcs=$(get_var "$result_file" "current_npcs")
         if [ -n "$npcs" ] && [ "$npcs" != "{}" ]; then
             echo "      NPC:  $npcs"
@@ -160,8 +184,6 @@ EOF
         cat "$result_file" | sed 's/^/      /'
     fi
 }
-
-# ============================================================
 
 echo "========================================"
 echo "  Mapper 正则测试"
@@ -175,9 +197,9 @@ for sample in "$SAMPLES_DIR"/*.txt; do
     name=$(basename "$sample" .txt)
     run_test "$name" "$sample" "$port"
     port=$((port + 1))
+    echo ""
 done
 
-echo ""
 echo "========================================"
 echo "  结果: $PASS/$TOTAL 通过"
 if [ "$FAIL" -gt 0 ]; then

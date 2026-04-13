@@ -85,7 +85,7 @@ grep "result=expected_value" /tmp/result.txt
 
 | 模块 | 测试套件 | 覆盖点 | 状态 |
 |------|----------|--------|------|
-| Mapper 正则 | run_mapper_tests.sh | 房间名、出口、NPC 捕获 | ✅ 4/4 |
+| Mapper 正则 | run_mapper_tests.sh | 房间名、出口、NPC（brief+完整模式） | ✅ 4/4 |
 | Login 子系统 | run_subsystem_tests.sh | 新版/旧版登录流程 | ✅ 2/2 |
 | Dream 传送 | run_subsystem_tests.sh | 传送命令 + 自动确认 | ✅ 1/1 |
 
@@ -96,6 +96,8 @@ grep "result=expected_value" /tmp/result.txt
 | 样本文件混乱 | ~20min | login/dream 样本被 mapper 测试扫描到，误触发断言失败 |
 | 样本路径问题 | ~15min | 测试脚本中样本路径硬编码，迁移后失效 |
 | 路口 TIME_WAIT | ~10min | 并发测试时端口复用导致 Connection refused |
+| 只用完整模式样本 | ~2h | mock 测试通过但实际 MUD 连接失败，因为移动时是 brief 格式 |
+| 测试脚本 heredoc 转义 | ~30min | shell heredoc 中 tt++ 的 `{}` `$` `\` 冲突，改用双段 heredoc（TTEOF 不展开变量 + EOF 展开） |
 
 ## 验证方式
 

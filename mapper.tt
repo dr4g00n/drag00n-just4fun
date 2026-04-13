@@ -1,6 +1,7 @@
 #variable {map_data_dir} {map_data}
 #variable {current_room} {}
 #variable {current_room_exits} {}
+#variable {current_room_exits_brief} {}
 #variable {current_npcs} {}
 
 #ALIAS map_init {
@@ -8,31 +9,48 @@
     #showme <158>[地图] 初始化地图系统
 }
 
-; 位置捕获
+; brief 模式：房间名和出口在同一行
+#action {^{.+} - {.+}$} {
+    #variable {current_room} {%1};
+    #variable {current_room_exits_brief} {%2};
+    #showme <158>[地图] 房间: %1;
+    #showme <158>[地图] 出口: %2
+}
+
+; 完整模式：房间名单独一行
 #action {^{.+} -$} {
     #variable {current_room} {%1};
     #showme <158>[地图] 房间: %1
 }
 
-; 出口捕获
+; 完整模式：出口单独一行（tt++ 会 strip 前导空格）
 #action {^这里明显的出口是 {.+}\.$} {
     #variable {current_room_exits} {%1};
     #showme <158>[地图] 出口: %1
 }
 
-; NPC 捕获
+; brief 模式：NPC 无 ◎ 前缀，两个空格缩进
+#action {^  {.+} \({.+}\)$} {
+    #list {current_npcs} {add} {%1(%2)};
+    #showme <138>[地图] NPC: %1(%2)
+}
+
+; 完整模式：NPC 有 ◎ 前缀
 #action {^◎{.+} \({.+}\)$} {
     #list {current_npcs} {add} {%1(%2)};
     #showme <138>[地图] NPC: %1(%2)
 }
 
-; 地图命令
 #ALIAS map_info {
     #showme <178>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━;
     #showme <178>地图系统状态;
     #showme <178>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━;
     #showme <138>  当前房间: $current_room;
-    #showme <138>  当前出口: $current_room_exits;
+    #if {"$current_room_exits_brief" != ""} {
+        #showme <138>  当前出口: $current_room_exits_brief
+    } {
+        #showme <138>  当前出口: $current_room_exits
+    };
     #showme <138>  NPC数量: &current_npcs[];
     #showme <178>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 }

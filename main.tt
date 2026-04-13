@@ -6,6 +6,7 @@
 
 #variable {current_room} {}
 #variable {current_room_exits} {}
+#variable {current_room_exits_brief} {}
 #variable {current_npcs} {}
 
 ; 加载子系统
@@ -28,25 +29,39 @@
 #variable {temp_room} {}
 #variable {temp_exits} {}
 
-; 位置捕获
-#action {^{.+} -$} {
+; brief 模式：房间名和出口在同一行
+#action {^{.+} - {.+}$} {
     #variable {temp_room} {%1};
-    #showme <158>[地图] 房间: %1
+    #variable {current_room_exits_brief} {%2};
+    #showme <158>[地图] 房间: %1 (brief模式);
+    #showme <158>[地图] 出口: %2
 }
 
-; 出口捕获
+; 完整模式：房间名单独一行
+#action {^{.+} -$} {
+    #variable {temp_room} {%1};
+    #showme <158>[地图] 房间: %1 (完整模式)
+}
+
+; 完整模式：出口单独一行（tt++ 会 strip 前导空格）
 #action {^这里明显的出口是 {.+}\.$} {
     #variable {current_room_exits} {%1};
     #showme <158>[地图] 出口: %1
 }
 
-; NPC 捕获
+; brief 模式：NPC 无 ◎ 前缀，两个空格缩进
+#action {^  {.+} \({.+}\)$} {
+    #list {current_npcs} {add} {%1(%2)};
+    #showme <138>[地图] NPC: %1(%2)
+}
+
+; 完整模式：NPC 有 ◎ 前缀
 #action {^◎{.+} \({.+}\)$} {
     #list {current_npcs} {add} {%1(%2)};
     #showme <138>[地图] NPC: %1(%2)
 }
 
-; 提示符时保存
+; 提示符时保存（仅完整模式需要）
 #action {^> $} {
     #variable {current_room} {$temp_room}
 }
@@ -56,13 +71,23 @@
     #showme <178>地图系统状态;
     #showme <178>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━;
     #showme <138>  当前房间: $current_room;
-    #showme <138>  当前出口: $current_room_exits;
+    #if {"$current_room_exits_brief" != ""} {
+        #showme <138>  当前出口: $current_room_exits_brief
+    } {
+        #showme <138>  当前出口: $current_room_exits
+    };
     #showme <138>  NPC数量: &current_npcs[];
     #showme <178>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 }
 
 #ALIAS m_save {
-    #system printf '{"room":"%s","exits":"%s"}\n' "$current_room" "$current_room_exits" > map_data/$current_room.json
+    #if {"$current_room" != ""} {
+        #if {"$current_room_exits_brief" != ""} {
+            #system printf '{"room":"%s","exits":"%s"}\n' "$current_room" "$current_room_exits_brief" > map_data/$current_room.json
+        } {
+            #system printf '{"room":"%s","exits":"%s"}\n' "$current_room" "$current_room_exits" > map_data/$current_room.json
+        }
+    }
 }
 
 #ALIAS m_load {
