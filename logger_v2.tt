@@ -1,4 +1,4 @@
-#variable {log_file} {tintin_log.txt}
+#variable {log_file} {tintin_shujian.log}
 #variable {logging_enabled} {0}
 
 /* ============================================================ */
