@@ -13,7 +13,7 @@ set -euo pipefail
 TT_BIN="/opt/homebrew/bin/tt++"
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 TEST_DIR="$PROJECT_DIR/tests"
-SAMPLES_DIR="${1:-$TEST_DIR/samples}"
+SAMPLES_DIR="${1:-$TEST_DIR/samples/mapper}"
 MOCK_SERVER="$TEST_DIR/mock_mud_server.py"
 WORK_DIR="/tmp/tt_mapper_tests"
 

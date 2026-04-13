@@ -28,54 +28,20 @@
 #variable {temp_room} {}
 #variable {temp_exits} {}
 
-; 位置捕获 - 精确 room 名
-#action {武馆大门 -} {
-    #variable {temp_room} {武馆大门}
-}
-#action {青龙门内街 -} {
-    #variable {temp_room} {青龙门内街}
-}
-#action {青龙门 -} {
-    #variable {temp_room} {青龙门}
-}
-#action {南城巷 -} {
-    #variable {temp_room} {南城巷}
-}
-#action {武馆 -} {
-    #variable {temp_room} {武馆}
-}
-#action {练功房 -} {
-    #variable {temp_room} {练功房}
-}
-#action {大院 -} {
-    #variable {temp_room} {大院}
-}
-#action {东街 -} {
-    #variable {temp_room} {东街}
-}
-#action {西街 -} {
-    #variable {temp_room} {西街}
-}
-#action {南城巷 -} {
-    #variable {temp_room} {南城巷}
-}
-#action {北街 -} {
-    #variable {temp_room} {北街}
-}
-#action {南街 -} {
-    #variable {temp_room} {南街}
-}
-#action {广场 -} {
-    #variable {temp_room} {广场}
+; 位置捕获
+#action {^{.+} -$} {
+    #variable {temp_room} {%1};
+    #showme <158>[地图] 房间: %1
 }
 
-; 出口捕获 - 简单
-#action {这里明显的出口是 enter 和 south} {
-    #variable {current_room_exits} {enter 和 south}
+; 出口捕获
+#action {^这里明显的出口是 {.+}\.$} {
+    #variable {current_room_exits} {%1};
+    #showme <158>[地图] 出口: %1
 }
 
 ; NPC 捕获
-#action {◎(.+) \((.+)\)$} {
+#action {^◎{.+} \({.+}\)$} {
     #list {current_npcs} {add} {%1(%2)};
     #showme <138>[地图] NPC: %1(%2)
 }

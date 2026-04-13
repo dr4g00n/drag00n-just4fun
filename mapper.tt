@@ -9,19 +9,19 @@
 }
 
 ; 位置捕获
-#action {^(.+) -$} {
+#action {^{.+} -$} {
     #variable {current_room} {%1};
     #showme <158>[地图] 房间: %1
 }
 
 ; 出口捕获
-#action {^    这里明显的出口是 (.+)\.$} {
+#action {^这里明显的出口是 {.+}\.$} {
     #variable {current_room_exits} {%1};
     #showme <158>[地图] 出口: %1
 }
 
 ; NPC 捕获
-#action {^◎(.+) \((.+)\)$} {
+#action {^◎{.+} \({.+}\)$} {
     #list {current_npcs} {add} {%1(%2)};
     #showme <138>[地图] NPC: %1(%2)
 }
