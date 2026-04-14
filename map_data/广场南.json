@@ -6,6 +6,8 @@
     "south",
     "west"
   ],
-  "edges": {},
+  "edges": {
+    "north": "中央广场"
+  },
   "npcs": []
 }

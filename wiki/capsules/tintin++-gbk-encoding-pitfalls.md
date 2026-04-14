@@ -65,6 +65,48 @@ offset 0x40: e5b9bf e59c ba e58d97 20 2d 20 0a
 
 关闭颜色模式后行尾空格依然存在。这不是 ANSI 颜色代码的问题，而是 GBK→UTF8 编码转换的副作用。
 
+### 6. `^` 锚定在 ANSI 颜色前缀行上失效
+
+完整模式的出口行实际到达 tt++ 时带 ANSI 颜色代码：
+
+```
+[0;0m    这里明显的出口是 [1meast、north、south[0;0m 和 [1mwest[0;0m。
+```
+
+tt++ 的"前导空格被 strip"行为**只对无颜色代码的行生效**。有 ANSI 代码时，空格在代码之后、文本之前，`^` 匹配的是 ANSI 转义序列而非文本行首。
+
+❌ `#action {^这里明显的出口是 {.+}}` → 不匹配（`^` 后期望文本，但行首是 `[0;0m    `）
+✅ `#action {这里明显的出口是 {.+}}` → 匹配（去掉 `^`，在行中任意位置匹配）
+
+**注意**：去掉 `^` 意味着任何包含该文本的行都会触发，需确保措辞足够独特。
+
+### 7. MUD 出口行有两种措辞
+
+书剑 MUD 的完整模式出口行不是固定格式：
+
+| 出口数 | 措辞 | 示例 |
+|--------|------|------|
+| 多个 | `这里明显的出口是` | `这里明显的出口是 east、north、south 和 west。` |
+| 单个 | `这里唯一的出口是` | `这里唯一的出口是 north。` |
+
+❌ 只写 `#action {这里明显的出口是 {.+}}` → 单出口房间捕获不到
+✅ 两个 action 都写：
+```tt
+#action {这里明显的出口是 {.+}} { ... }
+#action {这里唯一的出口是 {.+}} { ... }
+```
+
+Python 端需清理捕获内容中的中文句号 `。`、连词 `和`、ANSI 颜色代码：
+```python
+ANSI_RE = re.compile(r'\x1b\[[0-9;]*m')
+
+def parse_exits(exits_str):
+    exits_str = ANSI_RE.sub('', exits_str)
+    exits_str = re.sub(r'[。.和]', '', exits_str)
+    exits = re.split(r"[、\s,]+", exits_str)
+    return [e for e in exits if e]
+```
+
 ## 已验证的正确方案
 
 ```tt
@@ -72,6 +114,15 @@ offset 0x40: e5b9bf e59c ba e58d97 20 2d 20 0a
 ; 注意 -%s 而不是 -$，因为行尾有空格
 #action {^{.+} -%s} {
     #variable {temp_room} {%1}
+}
+
+; 完整模式出口行：不用 ^（ANSI 颜色代码导致前导空格不被 strip）
+; 两种措辞：多出口用"明显的"，单出口用"唯一的"
+#action {这里明显的出口是 {.+}} {
+    #variable {current_room_exits} {%1}
+}
+#action {这里唯一的出口是 {.+}} {
+    #variable {current_room_exits} {%1}
 }
 
 ; brief 模式：房间名和出口在同一行
@@ -90,8 +141,13 @@ offset 0x40: e5b9bf e59c ba e58d97 20 2d 20 0a
 Python 后处理出口数据时：
 ```python
 import re
-exits = re.split(r"[、\s,]+", exits_str)  # 兼容中文顿号、空格、英文逗号
-exits = [e for e in exits if e]            # 过滤空串
+ANSI_RE = re.compile(r'\x1b\[[0-9;]*m')
+
+def parse_exits(exits_str):
+    exits_str = ANSI_RE.sub('', exits_str)      # 清理 ANSI 颜色代码
+    exits_str = re.sub(r'[。.和]', '', exits_str) # 清理中文句号、英文句号、连词
+    exits = re.split(r"[、\s,]+", exits_str)     # 按顿号、空格、逗号分割
+    return [e for e in exits if e]
 ```
 
 ## 踩过的坑
@@ -102,6 +158,8 @@ exits = [e for e in exits if e]            # 过滤空串
 | NPC 正则用 `\(` 转义括号 | ~2h | 语法错误或匹配失败，`()` 在 tt++ 中本就是字面量 |
 | 怀疑 ANSI 颜色代码干扰 | ~1h | `#config color off` 后问题不变，真正原因是编码转换 |
 | 未用 hex dump 验证原始数据 | ~2h | 靠猜测调试，走了大量弯路 |
+| `^` 锚定出口行但前导空格因 ANSI 代码未被 strip | ~1h | 完整模式出口 action 从不触发，`#showme` 测试确认去掉 `^` 后匹配 |
+| 只写"明显的出口是"遗漏单出口房间 | ~30min | 当铺等单出口房间 exits 为空 |
 
 ## 验证方式
 

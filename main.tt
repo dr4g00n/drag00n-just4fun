@@ -53,8 +53,15 @@
 }
 
 ; 完整模式出口行（look 命令触发）
-; 前导空格可能因 ANSI 颜色代码未被 strip，不用 ^ 锚定
+; 两种措辞：多数出口用"明显的"，单个出口用"唯一的"
 #action {这里明显的出口是 {.+}} {
+    #variable {current_room_exits} {%1};
+    #if {"$map_active" == "1"} {
+        #showme <158>[地图] 出口: %1
+    }
+}
+
+#action {这里唯一的出口是 {.+}} {
     #variable {current_room_exits} {%1};
     #if {"$map_active" == "1"} {
         #showme <158>[地图] 出口: %1

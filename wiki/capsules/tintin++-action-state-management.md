@@ -127,6 +127,39 @@ MUD 登录过程输出大量非房间数据（欢迎屏、规则说明、ASCII a
 
 如果需要寻路时输出方向序列，必须使用 `m_go`。
 
+### 7. `#foreach` + `m_go` 导致粘行 — 必须用 `#delay`
+
+`#foreach` 循环内的 `m_go` 会**立即连续发送所有方向命令**，不等 MUD 响应。结果：
+
+- 方向命令与 MUD 提示符 `> ` 粘连，被当成本文而非命令
+- 房间名被污染为 `> 广场东`
+- 后续 action 匹配错乱
+
+❌ 立即发送所有方向：
+```tt
+#foreach {$walk_dirs[]} {step} {
+    m_go $step      ; 立即执行，不等 MUD 响应
+}
+```
+
+✅ 用 `#delay` 逐步发送：
+```tt
+#variable {walk_steps} {$walk_dirs};
+#variable {walk_index} {1};
+
+#ALIAS m_walk_step {
+    #if {&walk_steps[] >= $walk_index} {
+        #variable {step} {$walk_steps[$walk_index]};
+        m_go $step;
+        #math {walk_index} {$walk_index + 1};
+        #delay 1 {m_walk_step}    ; 等 1 秒再发下一步
+    }
+}
+m_walk_step
+```
+
+**经验值**：MUD 响应延迟通常 0.3-0.8 秒，`#delay 1`（1 秒）足够安全。网络不稳定时可加到 2 秒。
+
 ## 已验证的正确方案
 
 完整的状态管理流程：
@@ -184,6 +217,7 @@ MUD 登录过程输出大量非房间数据（欢迎屏、规则说明、ASCII a
 | 去掉 `map_active` 保护 | ~1h | 登录垃圾数据被匹配，`#showme` 输出递归触发 action |
 | 第一个房间 `current_room` 为空 | ~1h | `m_flush_npcs` 跳过（`%1 == ""`），`m_record_edge` 跳过 |
 | 不用 `m_go` 直接发方向 | ~30min | `edges.txt` 方向列为空，寻路无法输出方向序列 |
+| `#foreach` 立即发送所有 `m_go` | ~1h | 方向命令粘连，房间名变成 `> 广场东`，action 匹配错乱 |
 
 ## 验证方式
 
