@@ -1,0 +1,19 @@
+{
+  "room": "广场北",
+  "exits": [
+    "east",
+    "north",
+    "northeast",
+    "south",
+    "west"
+  ],
+  "edges": {
+    "north": "衙门大门",
+    "east": "北大街",
+    "northeast": "广场",
+    "west": "西大街"
+  },
+  "npcs": [
+    "徐霞客(Xu xiake)"
+  ]
+}

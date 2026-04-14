@@ -1,0 +1,8 @@
+{
+  "room": "大明寺",
+  "exits": [
+    "north"
+  ],
+  "edges": {},
+  "npcs": []
+}

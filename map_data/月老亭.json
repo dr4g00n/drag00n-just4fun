@@ -1,0 +1,14 @@
+{
+  "room": "月老亭",
+  "exits": [
+    "north",
+    "west"
+  ],
+  "edges": {
+    "west": "乐器店"
+  },
+  "npcs": [
+    "民女 双儿(Shuang er)",
+    "月下老人(Yuexiao laoren)"
+  ]
+}

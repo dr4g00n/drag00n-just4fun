@@ -1,1 +1,9 @@
-{"room":"武馆大门","exits":"enter、south"}
+{
+  "room": "武馆大门",
+  "exits": [
+    "enter",
+    "south"
+  ],
+  "edges": {},
+  "npcs": []
+}

@@ -1,0 +1,18 @@
+{
+  "room": "东门",
+  "exits": [
+    "east",
+    "north",
+    "northeast",
+    "south",
+    "west"
+  ],
+  "edges": {
+    "west": "东大街"
+  },
+  "npcs": [
+    "武将(Wu jiang)",
+    "二位官兵(Guan bing)",
+    "夹谷婉的尸体(Corpse)"
+  ]
+}

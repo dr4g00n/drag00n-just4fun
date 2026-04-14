@@ -1,0 +1,14 @@
+{
+  "room": "大虹桥",
+  "exits": [
+    "east",
+    "north",
+    "south"
+  ],
+  "edges": {
+    "south": "瘦西湖"
+  },
+  "npcs": [
+    "游客(You ke)"
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "room": "兵营",
+  "exits": [
+    "east",
+    "south"
+  ],
+  "edges": {
+    "east": "兵营大门",
+    "south": "兵器库"
+  },
+  "npcs": [
+    "三柄钢刀(Blade)",
+    "二位武将(Wu jiang)",
+    "盈霞的尸体(Corpse)",
+    "正五品守备 史青山(Shi qingshan)",
+    "三件军服(Junfu)",
+    "诸葛深武的尸体(Corpse)"
+  ]
+}

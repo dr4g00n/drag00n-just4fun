@@ -7,9 +7,12 @@
     "west"
   ],
   "edges": {
-    "south": "中央广场"
+    "west": "中央广场",
+    "east": "车马行",
+    "south": "东大街",
+    "north": "北大街"
   },
   "npcs": [
-    "赵爵爷(Zhao jueye)"
+    "丐帮帮众 中年乞丐(Qi gai)"
   ]
 }

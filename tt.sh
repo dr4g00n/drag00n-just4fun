@@ -2,7 +2,9 @@
 # 快捷启动脚本 - 一键启动 tintin++ 后台会话
 
 SESSION="tintin"
-DIR="/Users/dr4/tintin"
+DIR="$(cd "$(dirname "$0")" && pwd)"
+
+TT_BIN="${TT_BIN:-tt++}"
 
 cd "$DIR"
 
@@ -22,4 +24,4 @@ fi
 
 # 创建新会话并启动 tt++
 echo "启动 tintin++..."
-tmux new-session -s "$SESSION" /opt/homebrew/bin/tt++ main.tt
+tmux new-session -s "$SESSION" "$TT_BIN" main.tt

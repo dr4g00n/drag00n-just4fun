@@ -2,9 +2,9 @@
 # Tintin++ 包装脚本 - 使用 tmux 创建持久会话
 # 用法: ./tintin_wrapper.sh [start|stop|status|attach]
 
-SESSION_NAME="tintin_mud"
-TT_DIR="/Users/dr4/tintin"
-TT_BIN="/opt/homebrew/bin/tt++"
+SESSION_NAME="tintin"
+TT_DIR="$(cd "$(dirname "$0")" && pwd)"
+TT_BIN="${TT_BIN:-tt++}"
 
 start() {
     if tmux has-session -t "$SESSION_NAME" 2>/dev/null; then

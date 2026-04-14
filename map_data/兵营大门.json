@@ -1,0 +1,14 @@
+{
+  "room": "兵营大门",
+  "exits": [
+    "east",
+    "west"
+  ],
+  "edges": {
+    "west": "兵营",
+    "east": "广场西"
+  },
+  "npcs": [
+    "四位官兵(Guan bing)"
+  ]
+}

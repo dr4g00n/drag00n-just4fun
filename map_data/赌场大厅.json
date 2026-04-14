@@ -1,0 +1,14 @@
+{
+  "room": "赌场大厅",
+  "exits": [
+    "down",
+    "east",
+    "north"
+  ],
+  "edges": {
+    "east": "赌场"
+  },
+  "npcs": [
+    "大羊牯 平威(Ping wei)"
+  ]
+}

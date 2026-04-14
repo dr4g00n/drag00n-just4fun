@@ -7,7 +7,12 @@
     "west"
   ],
   "edges": {
-    "west": "广场南"
+    "west": "广场南",
+    "east": "东门",
+    "south": "乐器店",
+    "north": "广场东"
   },
-  "npcs": []
+  "npcs": [
+    "采矿师傅(Caikuang shifu)"
+  ]
 }

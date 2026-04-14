@@ -8,7 +8,8 @@
   ],
   "edges": {
     "north": "西大街",
-    "south": "南大街"
+    "south": "南大街",
+    "west": "兵营大门"
   },
   "npcs": [
     "少林弟子 托钵僧(Tuobo seng)",

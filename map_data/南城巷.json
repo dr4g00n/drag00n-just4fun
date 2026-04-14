@@ -1,1 +1,10 @@
-{"room":"南城巷","exits":"east、north、south"}
+{
+  "room": "南城巷",
+  "exits": [
+    "east",
+    "north",
+    "south"
+  ],
+  "edges": {},
+  "npcs": []
+}

@@ -4,8 +4,8 @@
 
 /* 读取 .env 文件获取登录凭据 */
 #ALIAS load_credentials {
-    #script {username} {source /Users/dr4/tintin/.env 2>/dev/null; echo "$MUD_USERNAME"};
-    #script {password} {source /Users/dr4/tintin/.env 2>/dev/null; echo "$MUD_PASSWORD"};
+    #script {username} {source .env 2>/dev/null; echo "$MUD_USERNAME"};
+    #script {password} {source .env 2>/dev/null; echo "$MUD_PASSWORD"};
 
     #variable {mud_username} {$username[1]};
     #variable {mud_password} {$password[1]};
@@ -36,15 +36,6 @@
 /* 自动登录 - 发送密码 */
 #action {^请您输入这个人物的识别密码\(passwd\)：$} {
     #showme <138>[登录] 触发密码输入;
-    #if {"$mud_password" != ""} {
-        #showme <138>[登录] 发送密码;
-        #send $mud_password;
-        #showme <138>[登录] 已发送密码
-    }
-}
-
-#action {^请输入您的密码：$} {
-    #showme <138>[登录] 触发旧版密码输入;
     #if {"$mud_password" != ""} {
         #showme <138>[登录] 发送密码;
         #send $mud_password;

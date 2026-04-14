@@ -1,0 +1,14 @@
+{
+  "room": "湖畔",
+  "exits": [
+    "north",
+    "south"
+  ],
+  "edges": {
+    "north": "瘦西湖",
+    "south": "西大街"
+  },
+  "npcs": [
+    "游客(You ke)"
+  ]
+}

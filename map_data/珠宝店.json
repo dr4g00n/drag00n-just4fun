@@ -1,0 +1,12 @@
+{
+  "room": "珠宝店",
+  "exits": [
+    "north"
+  ],
+  "edges": {
+    "north": "西大街"
+  },
+  "npcs": [
+    "朱老板(Zhu laoban)"
+  ]
+}

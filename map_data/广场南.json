@@ -7,7 +7,12 @@
     "west"
   ],
   "edges": {
-    "north": "中央广场"
+    "south": "当铺",
+    "north": "中央广场",
+    "west": "南大街",
+    "east": "东大街"
   },
-  "npcs": []
+  "npcs": [
+    "采矿师傅(Caikuang shifu)"
+  ]
 }

@@ -6,9 +6,13 @@
     "south",
     "west"
   ],
-  "edges": {},
+  "edges": {
+    "south": "广场南",
+    "east": "广场东",
+    "west": "广场西",
+    "north": "广场北"
+  },
   "npcs": [
-    "朝廷正八品铁捕 李捕头(Li butou)",
     "公子哥儿(Gong zi)",
     "梦见石(Dream stone)",
     "江湖艺人(Yi ren)"

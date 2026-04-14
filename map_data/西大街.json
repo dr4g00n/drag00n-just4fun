@@ -7,11 +7,11 @@
     "west"
   ],
   "edges": {
-    "south": "广场西"
+    "south": "大明寺",
+    "north": "湖畔",
+    "west": "西门"
   },
   "npcs": [
-    "流氓(Liu mang)",
-    "二件夜行衣(Yexing yi)",
-    "长剑(Changjian)"
+    "流氓(Liu mang)"
   ]
 }

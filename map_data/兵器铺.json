@@ -1,0 +1,14 @@
+{
+  "room": "兵器铺",
+  "exits": [
+    "north"
+  ],
+  "edges": {
+    "north": "东大街"
+  },
+  "npcs": [
+    "韩铁匠(Han tiejiang)",
+    "火炉(Huo lu)",
+    "铸剑师(Zhujian shi)"
+  ]
+}

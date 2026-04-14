@@ -7,7 +7,10 @@
     "west"
   ],
   "edges": {
-    "east": "广场南"
+    "east": "小盘古",
+    "south": "南门",
+    "west": "个园",
+    "north": "广场西"
   },
   "npcs": [
     "丐帮帮众 老乞丐(Qi gai)",

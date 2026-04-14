@@ -1,1 +1,11 @@
-{"room":"青龙门内街","exits":"east、north、south、west"}
+{
+  "room": "青龙门内街",
+  "exits": [
+    "east",
+    "north",
+    "south",
+    "west"
+  ],
+  "edges": {},
+  "npcs": []
+}

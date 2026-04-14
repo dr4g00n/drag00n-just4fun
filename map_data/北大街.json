@@ -1,0 +1,19 @@
+{
+  "room": "北大街",
+  "exits": [
+    "east",
+    "north",
+    "south",
+    "west"
+  ],
+  "edges": {
+    "west": "广场北",
+    "east": "小吃店",
+    "north": "北门",
+    "south": "广场东"
+  },
+  "npcs": [
+    "京城客(Jingcheng ke)",
+    "朝廷正九品捕头 张巡捕(Zhang xunbu)"
+  ]
+}

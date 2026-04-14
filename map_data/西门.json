@@ -1,0 +1,14 @@
+{
+  "room": "西门",
+  "exits": [
+    "east",
+    "west"
+  ],
+  "edges": {
+    "east": "西大街"
+  },
+  "npcs": [
+    "武将(Wu jiang)",
+    "二位官兵(Guan bing)"
+  ]
+}

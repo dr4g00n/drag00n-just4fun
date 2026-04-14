@@ -1,9 +1,11 @@
 #!/bin/bash
-# 书剑 MUD 启动脚本
+# 书剑 MUD 启动脚本（裸终端模式，不使用 tmux）
+# 推荐使用 ./tt.sh 或 ./tintin_wrapper.sh start 代替
 
-cd /Users/dr4/tintin
+cd "$(dirname "$0")"
 
-# 检查 .env 文件
+TT_BIN="${TT_BIN:-tt++}"
+
 if [ ! -f .env ]; then
     echo "未找到 .env 文件，从模板创建..."
     cp .env.example .env
@@ -11,5 +13,4 @@ if [ ! -f .env ]; then
     exit 1
 fi
 
-# 启动 tintin++
-/opt/homebrew/bin/tt++ main.tt
+"$TT_BIN" main.tt
