@@ -1,0 +1,207 @@
+# ============================================================
+# 自定义登录模板示例
+# ============================================================
+# 展示如何为不同的 MUD 服务器配置登录流程
+# ============================================================
+
+# ============================================================
+# 方法一：环境变量登录（推荐 - 安全）
+# ============================================================
+
+# 从环境变量读取凭据
+#ALIAS load_credentials {
+    #script {python3} {
+import os
+user = os.environ.get('MUD_USER', '')
+password = os.environ.get('MUD_PASSWORD', '')
+if user and password:
+    tintin.eval(f"#var {{mud_user}} {{{user}}}")
+    tintin.eval(f"#var {{mud_password}} {{{password}}}")
+    tintin.eval("#showme <138>[登录] 凭据已从环境变量加载")
+else:
+    tintin.eval("#showme <118>错误: 请设置 MUD_USER 和 MUD_PASSWORD 环境变量")
+    }
+}
+
+# 执行登录
+#ALIAS login {
+    #showme <138>[登录] 加载凭据;
+    load_credentials;
+    #showme <138>[登录] 发送登录请求;
+    #if {"$mud_user" != ""} {
+        $mud_user;
+    } {
+        #showme <118>错误: 用户名未设置
+    };
+    #delay {1};
+    #if {"$mud_password" != ""} {
+        $mud_password;
+    } {
+        #showme <118>错误: 密码未设置
+    }
+}
+
+# ============================================================
+# 方法二：交互式登录（调试用）
+# ============================================================
+
+# 交互式输入登录信息
+#ALIAS login_interactive {
+    #showme <138>请输入用户名:;
+    #line {gag} 1;
+    #line {variable} {mud_user};
+    #showme <138>请输入密码:;
+    #line {gag} 1;
+    #line {variable} {mud_password};
+    #showme <138>[登录] 凭据已设置;
+    #showme <138>输入 'do_login' 执行登录
+}
+
+# 执行保存的登录
+#ALIAS do_login {
+    $mud_user;
+    #delay {1};
+    $mud_password
+}
+
+# ============================================================
+# 方法三：多账号配置
+# ============================================================
+
+# 切换到账号 A
+#ALIAS switch_account_a {
+    #var {mud_user} {account_a};
+    #var {mud_password} {password_a};
+    #showme <138>[账号] 已切换到账号 A
+}
+
+# 切换到账号 B
+#ALIAS switch_account_b {
+    #var {mud_user} {account_b};
+    #var {mud_password} {password_b};
+    #showme <138>[账号] 已切换到账号 B
+}
+
+# ============================================================
+# 不同 MUD 服务器的登录示例
+# ============================================================
+
+# 书剑 MUD 登录
+#ALIAS login_shujian {
+    #showme <138>[登录] 连接书剑 MUD;
+    #session sj tj.sjever.net 5555;
+    #delay {2};
+    #showme <138>[登录] 发送凭据;
+    load_credentials;
+    $mud_user;
+    #delay {1};
+    $mud_password
+}
+
+# 西游记 MUD 登录示例
+#ALIAS login_journey {
+    #showme <138>[登录] 连接西游记 MUD;
+    #session journey xyz.mud.org 6666;
+    #delay {2};
+    #showme <138>[登录] 发送凭据;
+    load_credentials;
+    connect $mud_user $mud_password
+}
+
+# 侠客行 MUD 登录示例
+#ALIAS login_xiake {
+    #showme <138>[登录] 连接侠客行 MUD;
+    #session xiake xiake.mud.cn 4000;
+    #delay {2};
+    #showme <138>[登录] 发送凭据;
+    load_credentials;
+    $mud_user;
+    #delay {1};
+    $mud_password
+}
+
+# ============================================================
+# 自动重连配置
+# ============================================================
+
+# 断线自动重连
+#action {^你已经断开连接。$} {
+    #showme <118>[重连] 检测到断线，5秒后重连;
+    #delay {5};
+    #showme <138>[重连] 正在重新连接...;
+    #session sj tj.sjever.net 5555
+}
+
+# ============================================================
+# 登录后自动执行命令
+# ============================================================
+
+# 登录成功后自动执行的命令
+#action {^欢迎你回来！$} {
+    #delay {1};
+    #showme <138>[自动] 登录成功，执行初始化命令;
+    #在这里添加登录后要执行的命令
+    #例如：score; inventory; look
+}
+
+# ============================================================
+# 登录状态检查
+# ============================================================
+
+# 检查是否已登录
+#ALIAS check_login {
+    #if {"$mud_user" == ""} {
+        #showme <118>状态: 未登录（用户名未设置）
+    } {
+        #showme <138>状态: 已登录为 $mud_user
+    }
+}
+
+# ============================================================
+# 安全清除凭据
+# ============================================================
+
+# 清除当前登录凭据（内存）
+#ALIAS clear_credentials {
+    #var {mud_user} {};
+    #var {mud_password} {};
+    #showme <138>[安全] 凭据已从内存清除
+}
+
+# ============================================================
+# 使用说明
+# ============================================================
+
+#ALIAS help_login {
+    #showme <178>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━;
+    #showme <178>自定义登录配置;
+    #showme <178>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━;
+    #showme <138> 推荐方法（环境变量）:;
+    #showme <138>   load_credentials  - 从环境变量加载凭据;
+    #showme <138>   login            - 执行登录;
+    #showme <178>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━;
+    #showme <138> 调试方法（交互式）:;
+    #showme <138>   login_interactive - 交互式输入;
+    #showme <138>   do_login         - 执行登录;
+    #showme <178>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━;
+    #showme <138> 多账号:;
+    #showme <138>   switch_account_a  - 切换到账号 A;
+    #showme <138>   switch_account_b  - 切换到账号 B;
+    #showme <178>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━;
+    #showme <138> 不同 MUD 服务器:;
+    #showme <138>   login_shujian    - 书剑 MUD;
+    #showme <138>   login_journey    - 西游记 MUD;
+    #showme <138>   login_xiake      - 侠客行 MUD;
+    #showme <178>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━;
+    #showme <138> 安全:;
+    #showme <138>   clear_credentials - 清除内存凭据;
+    #showme <138>   check_login       - 检查登录状态;
+    #showme <178>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━;
+    #showme <138> 环境变量设置方法:;
+    #showme <138>   export MUD_USER=你的用户名;
+    #showme <138>   export MUD_PASSWORD=你的密码;
+    #showme <178>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+}
+
+# 启动时显示提示
+#showme <138>输入 'help_login' 查看登录配置说明
