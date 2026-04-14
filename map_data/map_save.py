@@ -27,6 +27,20 @@ from collections import defaultdict
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 RAW_DIR = os.path.join(SCRIPT_DIR, "raw")
 EDGES_FILE = os.path.join(RAW_DIR, "edges.txt")
+DATA_DIR = SCRIPT_DIR
+
+ANSI_RE = re.compile(r'\x1b\[[0-9;]*m')
+
+
+def strip_ansi(text):
+    return ANSI_RE.sub('', text)
+
+
+def parse_exits(exits_str):
+    exits_str = strip_ansi(exits_str)
+    exits_str = re.sub(r'[。.和]', '', exits_str)
+    exits = re.split(r"[、\s,]+", exits_str)
+    return [e for e in exits if e]
 
 
 def load_raw_exits():
@@ -45,8 +59,7 @@ def load_raw_exits():
                 parts = line.split("|", 1)
                 room_name = parts[0].strip()
                 exits_str = parts[1].strip()
-                exits = re.split(r"[、\s,]+", exits_str)
-                exits = [e for e in exits if e]
+                exits = parse_exits(exits_str)
                 rooms[room_name] = exits
         except Exception:
             pass

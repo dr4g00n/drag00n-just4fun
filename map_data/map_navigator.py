@@ -20,6 +20,20 @@ import re
 import sys
 from collections import defaultdict, deque
 
+ANSI_RE = re.compile(r'\x1b\[[0-9;]*m')
+
+
+def strip_ansi(text):
+    return ANSI_RE.sub('', text)
+
+
+def parse_exits(exits_str):
+    exits_str = strip_ansi(exits_str)
+    exits_str = re.sub(r'[。.和]', '', exits_str)
+    exits = re.split(r"[、\s,]+", exits_str)
+    return [e for e in exits if e]
+
+
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 RAW_DIR = os.path.join(SCRIPT_DIR, "raw")
 EDGES_FILE = os.path.join(RAW_DIR, "edges.txt")
@@ -45,8 +59,7 @@ def load_from_raw():
                     parts = line.split("|", 1)
                     room_name = parts[0].strip()
                     exits_str = parts[1].strip()
-                    exits = re.split(r"[、\s,]+", exits_str)
-                    exits = [e for e in exits if e]
+                    exits = parse_exits(exits_str)
                     rooms[room_name] = {"exits": exits, "file": fpath}
             except Exception:
                 pass
@@ -79,8 +92,12 @@ def load_from_json():
                 data = json.load(f)
             room_name = data.get("room", "")
             exits_str = data.get("exits", "")
-            exits = re.split(r"[、\s,]+", exits_str)
-            exits = [e for e in exits if e]
+            if isinstance(exits_str, list):
+                exits = exits_str
+            elif isinstance(exits_str, str):
+                exits = parse_exits(exits_str)
+            else:
+                exits = []
             if room_name:
                 rooms[room_name] = {"exits": exits, "file": fpath}
             for npc in data.get("npcs", []):
@@ -197,6 +214,16 @@ def bfs_path(graph, start, end):
     return None
 
 
+REVERSE_DIR = {
+    "north": "south", "south": "north",
+    "east": "west", "west": "east",
+    "up": "down", "down": "up",
+    "northeast": "southwest", "southwest": "northeast",
+    "northwest": "southeast", "southeast": "northwest",
+    "enter": "out", "out": "enter",
+}
+
+
 def path_to_directions(graph, path):
     """将房间路径转为方向序列"""
     if not path or len(path) < 2:
@@ -208,12 +235,18 @@ def path_to_directions(graph, path):
         d = graph.get(current, {}).get("directed_edges", {}).get(next_room)
         if d:
             directions.append(d)
+            continue
+        reverse_d = graph.get(next_room, {}).get("directed_edges", {}).get(current)
+        if reverse_d:
+            inferred = REVERSE_DIR.get(reverse_d)
+            if inferred:
+                directions.append(inferred)
+                continue
+        exits = graph.get(current, {}).get("exits", [])
+        if len(exits) == 1:
+            directions.append(exits[0])
         else:
-            exits = graph.get(current, {}).get("exits", [])
-            if len(exits) == 1:
-                directions.append(exits[0])
-            else:
-                directions.append(f"?→{next_room}")
+            directions.append(f"?→{next_room}")
     return directions
 
 
@@ -227,6 +260,17 @@ def cmd_path(start, end):
     directions = path_to_directions(graph, path)
     if directions:
         print("方向: " + " → ".join(directions))
+
+
+def cmd_dirs(start, end):
+    graph = build_graph()
+    path = bfs_path(graph, start, end)
+    if path is None:
+        return
+    directions = path_to_directions(graph, path)
+    for d in directions:
+        if not d.startswith("?"):
+            print(d)
 
 
 def cmd_walk(start, end):
@@ -307,6 +351,12 @@ def main():
             print("用法: map_navigator.py path <起点> <终点>")
             sys.exit(1)
         cmd_path(sys.argv[2], sys.argv[3])
+
+    elif command == "dirs":
+        if len(sys.argv) < 4:
+            print("用法: map_navigator.py dirs <起点> <终点>")
+            sys.exit(1)
+        cmd_dirs(sys.argv[2], sys.argv[3])
 
     elif command == "walk":
         if len(sys.argv) < 4:

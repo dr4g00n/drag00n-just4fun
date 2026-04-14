@@ -1,0 +1,17 @@
+{
+  "room": "西大街",
+  "exits": [
+    "east",
+    "north",
+    "south",
+    "west"
+  ],
+  "edges": {
+    "south": "广场西"
+  },
+  "npcs": [
+    "流氓(Liu mang)",
+    "二件夜行衣(Yexing yi)",
+    "长剑(Changjian)"
+  ]
+}

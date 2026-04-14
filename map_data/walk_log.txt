@@ -1,0 +1,6 @@
+#showme <158>[地图] 共 5 步
+m_go west
+m_go west
+m_go north
+m_go north
+m_go north

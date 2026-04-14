@@ -6,6 +6,10 @@
     "south",
     "west"
   ],
-  "edges": {},
-  "npcs": []
+  "edges": {
+    "south": "中央广场"
+  },
+  "npcs": [
+    "赵爵爷(Zhao jueye)"
+  ]
 }

@@ -53,7 +53,8 @@
 }
 
 ; 完整模式出口行（look 命令触发）
-#action {^这里明显的出口是 {.+}\.$} {
+; 前导空格可能因 ANSI 颜色代码未被 strip，不用 ^ 锚定
+#action {这里明显的出口是 {.+}} {
     #variable {current_room_exits} {%1};
     #if {"$map_active" == "1"} {
         #showme <158>[地图] 出口: %1
@@ -76,12 +77,20 @@
     }
 }
 
-; 提示符：激活地图系统，用 temp_room 初始化 current_room
+; 提示符：激活地图系统 + 保存完整模式数据
 #action {^> $} {
     #if {"$map_active" == "0" && "$temp_room" != ""} {
         #variable {map_active} {1};
         #variable {current_room} {$temp_room};
-        #showme <158>[地图] 地图采集已激活 (初始房间: $current_room)
+        #showme <158>[地图] 地图采集已激活 (初始房间: $current_room);
+        look
+    };
+    #if {"$map_active" == "1" && "$current_room" != ""} {
+        #if {"$current_room_exits" != "" && "$current_room_exits_brief" == ""} {
+            m_autosave;
+            #variable {current_room_exits} {}
+        };
+        m_flush_npcs {$current_room}
     }
 }
 
@@ -125,7 +134,7 @@
 #ALIAS m_autosave {
     m_record_edge;
     #if {"$current_room" != ""} {
-        #script {mkdir -p map_data/raw 2>/dev/null};
+        #system {mkdir -p map_data/raw 2>/dev/null};
         #if {"$current_room_exits_brief" != ""} {
             #system {echo "$current_room|$current_room_exits_brief" > map_data/raw/$current_room.exits}
         } {
@@ -155,21 +164,38 @@
 }
 
 #ALIAS map_init {
-    #script {result} {mkdir -p map_data/raw 2>/dev/null || echo "ok"};
+    #system {mkdir -p map_data/raw 2>/dev/null};
     #showme <158>[地图] 初始化地图系统
 }
+
+#variable {walk_steps} {}
+#variable {walk_index} {0}
 
 #ALIAS m_walk {
     #if {"%0" == ""} {
         #showme <118>用法: m_walk <目标房间>
     } {
-        #script {path} {python3 map_data/map_navigator.py path "$current_room" "%0" 2>/dev/null || echo "ERROR"};
-        #if {"$path[1]" != "ERROR"} {
-            #showme <158>[地图] 路线: $path[1];
-            #system {python3 map_data/map_navigator.py walk "$current_room" "%0" >> map_data/walk_log.txt}
+        #script {walk_result} {python3 map_data/map_navigator.py path "$current_room" "%0" 2>/dev/null || echo "ERROR"};
+        #if {"$walk_result[1]" != "ERROR" && "$walk_result[1]" != "NO_PATH"} {
+            #showme <158>[地图] 路线: $walk_result[1];
+            #script {walk_dirs} {python3 map_data/map_navigator.py dirs "$current_room" "%0" 2>/dev/null};
+            #variable {walk_steps} {$walk_dirs};
+            #variable {walk_index} {1};
+            m_walk_step
         } {
             #showme <118>[地图] 未找到路径
         }
+    }
+}
+
+#ALIAS m_walk_step {
+    #if {&walk_steps[] >= $walk_index} {
+        #variable {step} {$walk_steps[$walk_index]};
+        #if {"$step" != ""} {
+            m_go $step
+        };
+        #math {walk_index} {$walk_index + 1};
+        #delay 1 {m_walk_step}
     }
 }
 

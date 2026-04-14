@@ -1,7 +1,7 @@
 {
-  "room": "车马行",
+  "room": "当铺",
   "exits": [
-    "west"
+    "north"
   ],
   "edges": {},
   "npcs": []
