@@ -1,0 +1,15 @@
+{
+  "room": "中央广场",
+  "exits": [
+    "east",
+    "north",
+    "south",
+    "west"
+  ],
+  "edges": {},
+  "npcs": [
+    "公子哥儿(Gong zi)",
+    "梦见石(Dream stone)",
+    "江湖艺人(Yi ren)"
+  ]
+}

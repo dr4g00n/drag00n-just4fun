@@ -99,20 +99,24 @@ conn           # 连接书剑 MUD
 
 ```
 drag00n-just4fun/
-├── main.tt              # 主脚本入口
-├── mapper.tt            # 地图采集系统
-├── login.tt             # 登录管理
+├── main.tt              # 主脚本入口（地图 action + alias）
+├── mapper.tt            # 地图采集子系统
+├── login.tt             # 自动登录
+├── dream.tt             # 梦见石传送
 ├── logger_v2.tt         # 日志系统
-├── tt.sh                # 一键启动脚本
-├── tintin_wrapper.sh    # 完整控制脚本
+├── tintin_wrapper.sh    # tmux 后台会话管理
 ├── .env.example         # 环境变量模板
 ├── tests/               # 测试框架
 │   ├── run_all_tests.sh
 │   ├── mock_mud_server.py
 │   └── samples/         # 测试样本
 ├── wiki/                # 数据胶囊
-│   └── capsules/        # 经验知识库
-├── map_data/            # 地图数据存储
+│   ├── index.md         # 胶囊索引
+│   └── capsules/        # 经验知识库（6 个胶囊）
+├── map_data/            # 地图数据
+│   ├── raw/             # tt++ 采集的原始数据（.exits / .npcs / edges.txt）
+│   ├── map_navigator.py # BFS 寻路 + NPC 查询引擎
+│   └── map_save.py      # raw 数据 → 标准 JSON 后处理
 └── README_DAEMON.md     # 后台运行详细说明
 ```
 
@@ -174,8 +178,11 @@ map_info
 | 胶囊 | 主题 |
 |------|------|
 | [tintin++-macos-testing](wiki/capsules/tintin++-macos-testing.md) | Tintin++ 自动化测试最佳实践 |
-| [tintin++-regex-syntax](wiki/capsules/tintin++-regex-syntax.md) | Tintin++ 正则表达式语法 |
+| [tintin++-regex-syntax](wiki/capsules/tintin++-regex-syntax.md) | Tintin++ 正则表达式语法与陷阱 |
 | [tintin++-mud-display-modes](wiki/capsules/tintin++-mud-display-modes.md) | MUD 显示模式差异 |
+| [tintin++-test-framework](wiki/capsules/tintin++-test-framework.md) | 测试框架架构 |
+| [tintin++-gbk-encoding-pitfalls](wiki/capsules/tintin++-gbk-encoding-pitfalls.md) | GBK→UTF8 编码转换陷阱（行尾空格、`$` 失效） |
+| [tintin++-action-state-management](wiki/capsules/tintin++-action-state-management.md) | Action 时序与状态管理（NPC flush、变量展开、登录保护） |
 
 ---
 
@@ -193,11 +200,12 @@ map_info
 
 ## 📝 待办事项
 
+- [x] 自动寻路功能（BFS 最短路径）
+- [x] NPC 查询定位
 - [ ] 支持更多 MUD 服务器
 - [ ] Web 地图可视化界面
-- [ ] 自动寻路功能
 - [ ] 战斗自动化
-- [ ] 更多数据胶囊
+- [ ] 自动探索未知区域
 
 ---
 

@@ -1,0 +1,8 @@
+{
+  "room": "车马行",
+  "exits": [
+    "west"
+  ],
+  "edges": {},
+  "npcs": []
+}

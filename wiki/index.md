@@ -14,9 +14,11 @@
 | 胶囊 | 关键词 | 一句话结论 |
 |------|--------|-----------|
 | [tintin++-macos-testing](capsules/tintin++-macos-testing.md) | tt++ 测试、自动化测试、mock server、tmux | tt++ 没有 headless 模式，测试必须走 tmux + Python mock TCP server + `SESSION DISCONNECTED` 事件 |
-| [tintin++-regex-syntax](capsules/tintin++-regex-syntax.md) | tt++ 正则、action、分组、中文匹配、转义、NPC | 分组用 `{}` 不是 `()`，前导空格被 strip，NPC 格式不固定，action 顺序影响匹配 |
+| [tintin++-regex-syntax](capsules/tintin++-regex-syntax.md) | tt++ 正则、action、分组、中文匹配、转义、NPC | 分组用 `{}` 不是 `()`，前导空格被 strip，GBK→UTF8 后 `$` 锚定失效，`()` 是字面量不需转义 |
 | [tintin++-mud-display-modes](capsules/tintin++-mud-display-modes.md) | MUD 显示模式、brief、完整模式、移动、look、NPC 格式 | 移动时 brief 模式（房间+出口同行、NPC 无 ◎），look 时完整模式（分多行、NPC 有 ◎），action 必须同时覆盖 |
 | [tintin++-test-framework](capsules/tintin++-test-framework.md) | 测试框架、mock server、测试样本、run_all_tests | 统一测试架构：mock server + tt++ session + shell 断言 |
+| [tintin++-gbk-encoding-pitfalls](capsules/tintin++-gbk-encoding-pitfalls.md) | GBK、UTF8、编码转换、行尾空格、charset、hex dump | `GBK1TOUTF8` 转换后行尾残留 0x20 空格导致 `$` 失效，用 `-%s` 替代 `-$`，`()` 是字面量 |
+| [tintin++-action-state-management](capsules/tintin++-action-state-management.md) | action 时序、变量展开、NPC flush、map_active、登录保护 | NPC 行晚于房间行到达需延迟 flush，`#line log` 变量延迟展开用 `%1` 传参，`map_active` 隔离登录垃圾 |
 
 ## 新增胶囊
 

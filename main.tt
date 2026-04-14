@@ -11,6 +11,7 @@
 #variable {prev_room} {}
 #variable {prev_direction} {}
 #variable {map_active} {0}
+#variable {temp_room} {}
 
 ; 加载子系统
 #read login.tt
@@ -25,17 +26,14 @@
     load_credentials
 }
 
-#ALIAS monitor_start {
-    #showme <158>监控已启动
-}
-
-#variable {temp_room} {}
-#variable {temp_exits} {}
+; ============================================================
+; 地图采集 Actions
+; ============================================================
 
 ; brief 模式：房间名和出口在同一行
-; 格式: 房间名 - 方向1、方向2、...
-; 用 map_active flag 防止登录阶段误触发
+; 始终记录到 temp_room，但只在 map_active 时保存数据
 #action {^{.+} - {.+}$} {
+    #variable {temp_room} {%1};
     #if {"$map_active" == "1"} {
         m_flush_npcs {$current_room};
         #variable {prev_room} {$current_room};
@@ -47,40 +45,43 @@
     }
 }
 
-; 完整模式：房间名单独一行
-#action {^{.+} -$} {
-    #variable {current_room} {%1};
-    #variable {current_room_exits} {};
-    #variable {current_room_exits_brief} {};
-    #list {current_npcs} {clear};
+; 完整模式：房间名单独一行（look 命令触发）
+; MUD 的 "房间名 -" 行尾带一个空格（GBK→UTF8 转换残留），用 %s 匹配
+#action {^{.+} -%s} {
+    #variable {temp_room} {%1};
     #showme <158>[地图] 房间: %1 (完整模式)
 }
 
-; 完整模式：出口单独一行（tt++ 会 strip 前导空格）
+; 完整模式出口行（look 命令触发）
 #action {^这里明显的出口是 {.+}\.$} {
     #variable {current_room_exits} {%1};
-    #showme <158>[地图] 出口: %1
+    #if {"$map_active" == "1"} {
+        #showme <158>[地图] 出口: %1
+    }
 }
 
-; brief 模式：NPC 匹配
-; 格式: "  名称(English ID)" — tt++中 () 是字面量，{} 是分组
+; brief 模式 NPC：两空格开头 + 括号内英文 ID
 #action {^  {.+}({.+})$} {
-    #list {current_npcs} {add} {%1(%2)};
-    #showme <138>[地图] NPC: %1(%2)
+    #if {"$map_active" == "1"} {
+        #list {current_npcs} {add} {%1(%2)};
+        #showme <138>[地图] NPC: %1(%2)
+    }
 }
 
-; 完整模式：NPC 有 ◎ 前缀
+; 完整模式 NPC：◎ 前缀
 #action {^◎{.+} ({.+})$} {
-    #list {current_npcs} {add} {%1(%2)};
-    #showme <138>[地图] NPC: %1(%2)
+    #if {"$map_active" == "1"} {
+        #list {current_npcs} {add} {%1(%2)};
+        #showme <138>[地图] NPC: %1(%2)
+    }
 }
 
-; 提示符时激活地图系统并发 look 获取当前位置
+; 提示符：激活地图系统，用 temp_room 初始化 current_room
 #action {^> $} {
-    #if {"$map_active" == "0"} {
+    #if {"$map_active" == "0" && "$temp_room" != ""} {
         #variable {map_active} {1};
-        #showme <158>[地图] 地图采集已激活;
-        look
+        #variable {current_room} {$temp_room};
+        #showme <158>[地图] 地图采集已激活 (初始房间: $current_room)
     }
 }
 
@@ -103,7 +104,6 @@
 }
 
 ; 移动时自动记录边信息到 edges.txt
-; 格式: 源房间|方向|目标房间
 #ALIAS m_record_edge {
     #if {"$prev_room" != "" && "$prev_room" != "$current_room"} {
         #line log {map_data/raw/edges.txt} {$prev_room|$prev_direction|$current_room}
@@ -111,22 +111,17 @@
 }
 
 ; 切换房间前先把旧房间的 NPC 写盘
-; 参数: %1 = 房间名
 #ALIAS m_flush_npcs {
-    #showme <128>[DEBUG] flush_npcs room=%1 count=&current_npcs[];
     #if {"%1" != "" && &current_npcs[] > 0} {
-        #showme <128>[DEBUG] writing NPCs to %1.npcs;
         #system {rm -f map_data/raw/%1.npcs};
         #foreach {$current_npcs[]} {npc} {
-            #showme <128>[DEBUG] npc=$npc;
             #line log {map_data/raw/%1.npcs} {$npc}
         };
         #list {current_npcs} {clear}
     }
 }
 
-; 自动保存房间原始数据（每次进入房间触发）
-; 格式: 房间名|出口1 出口2 ...
+; 自动保存房间原始数据
 #ALIAS m_autosave {
     m_record_edge;
     #if {"$current_room" != ""} {
@@ -168,10 +163,10 @@
     #if {"%0" == ""} {
         #showme <118>用法: m_walk <目标房间>
     } {
-        #script {path} {python3 map_data/map_navigator.py path $current_room %0 2>/dev/null || echo "ERROR"};
+        #script {path} {python3 map_data/map_navigator.py path "$current_room" "%0" 2>/dev/null || echo "ERROR"};
         #if {"$path[1]" != "ERROR"} {
             #showme <158>[地图] 路线: $path[1];
-            #system {python3 map_data/map_navigator.py walk $current_room %0 >> map_data/walk_log.txt}
+            #system {python3 map_data/map_navigator.py walk "$current_room" "%0" >> map_data/walk_log.txt}
         } {
             #showme <118>[地图] 未找到路径
         }
@@ -182,11 +177,11 @@
     #if {"%0" == ""} {
         #showme <118>用法: m_find <NPC名或关键字>
     } {
-        #system {python3 map_data/map_navigator.py npc %0}
+        #system {python3 map_data/map_navigator.py npc "%0"}
     }
 }
 
-; 移动时记录方向（在发送方向命令前调用）
+; 移动时记录方向
 #ALIAS m_go {
     #variable {prev_direction} {%0};
     #send %0
