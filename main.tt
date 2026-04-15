@@ -11,9 +11,11 @@
 #variable {prev_room} {}
 #variable {prev_direction} {}
 #variable {map_active} {0}
-#variable {temp_room} {}
+#variable {room_uid} {}
+#variable {old_room} {}
+#variable {pending_room} {}
+#variable {uid_map_count} {0}
 
-; 加载子系统
 #read login.tt
 
 #ALIAS conn {
@@ -26,37 +28,74 @@
     load_credentials
 }
 
-; ============================================================
-; 地图采集 Actions
-; ============================================================
+#ALIAS m_resolve_uid {
+    #variable {raw_name} {%1};
+    #if {"$raw_name" == ""} {
+        #variable {room_uid} {};
+        #return
+    };
+    #variable {uid_exits} {};
+    #if {"$current_room_exits_brief" != ""} {
+        #variable {uid_exits} {$current_room_exits_brief}
+    } {
+        #variable {uid_exits} {$current_room_exits}
+    };
+    #replace {uid_exits} {和 } {、};
+    #replace {uid_exits} {。} {};
+    #replace {uid_exits} { } {、};
+    #replace {uid_exits} {、、} {、};
+    #math {uid_total} {$uid_map_count};
+    #loop {1} {$uid_total} {i} {
+        #if {"$uid_map[$i][1]" == "$raw_name" && "$uid_map[$i][2]" == "$uid_exits"} {
+            #variable {room_uid} {$uid_map[$i][3]};
+            #return
+        }
+    };
+    #math {name_count} {0};
+    #loop {1} {$uid_total} {i} {
+        #if {"$uid_map[$i][1]" == "$raw_name"} {
+            #math {name_count} {$name_count + 1}
+        }
+    };
+    #if {"$name_count" == "0"} {
+        #variable {room_uid} {$raw_name}
+    } {
+        #format {room_uid} {%s~%d} {$raw_name} {$name_count}
+    };
+    #math {uid_map_count} {$uid_map_count + 1};
+    #math {idx} {$uid_map_count};
+    #variable {uid_map[$idx][1]} {$raw_name};
+    #variable {uid_map[$idx][2]} {$uid_exits};
+    #variable {uid_map[$idx][3]} {$room_uid}
+}
 
-; brief 模式：房间名和出口在同一行
-; 始终记录到 temp_room，但只在 map_active 时保存数据
 #action {^{.+} - {.+}$} {
-    #variable {temp_room} {%1};
     #if {"$map_active" == "1"} {
-        m_flush_npcs {$current_room};
-        #variable {prev_room} {$current_room};
-        #variable {current_room} {%1};
+        m_flush_npcs {$room_uid};
+        #variable {old_room} {$room_uid};
         #variable {current_room_exits_brief} {%2};
-        #showme <158>[地图] 房间: %1 (brief模式);
+        m_resolve_uid {%1};
+        #showme <158>[地图] 房间: %1 → $room_uid (brief模式);
         #showme <158>[地图] 出口: %2;
-        m_autosave
+        m_autosave;
+        #variable {prev_room} {$room_uid}
     }
 }
 
-; 完整模式：房间名单独一行（look 命令触发）
-; MUD 的 "房间名 -" 行尾带一个空格（GBK→UTF8 转换残留），用 %s 匹配
 #action {^{.+} -%s} {
-    #variable {temp_room} {%1};
+    #if {"$map_active" == "1"} {
+        #variable {pending_room} {%1}
+    };
     #showme <158>[地图] 房间: %1 (完整模式)
 }
 
-; 完整模式出口行（look 命令触发）
-; 两种措辞：多数出口用"明显的"，单个出口用"唯一的"
 #action {这里明显的出口是 {.+}} {
     #variable {current_room_exits} {%1};
     #if {"$map_active" == "1"} {
+        #variable {old_room} {$room_uid};
+        m_resolve_uid {$pending_room};
+        m_autosave;
+        #variable {prev_room} {$room_uid};
         #showme <158>[地图] 出口: %1
     }
 }
@@ -64,11 +103,14 @@
 #action {这里唯一的出口是 {.+}} {
     #variable {current_room_exits} {%1};
     #if {"$map_active" == "1"} {
+        #variable {old_room} {$room_uid};
+        m_resolve_uid {$pending_room};
+        m_autosave;
+        #variable {prev_room} {$room_uid};
         #showme <158>[地图] 出口: %1
     }
 }
 
-; brief 模式 NPC：两空格开头 + 括号内英文 ID
 #action {^  {.+}({.+})$} {
     #if {"$map_active" == "1"} {
         #list {current_npcs} {add} {%1(%2)};
@@ -76,7 +118,6 @@
     }
 }
 
-; 完整模式 NPC：◎ 前缀
 #action {^◎{.+} ({.+})$} {
     #if {"$map_active" == "1"} {
         #list {current_npcs} {add} {%1(%2)};
@@ -84,32 +125,26 @@
     }
 }
 
-; 提示符：激活地图系统 + 保存完整模式数据
 #action {^> $} {
-    #if {"$map_active" == "0" && "$temp_room" != ""} {
+    #if {"$map_active" == "0"} {
         #variable {map_active} {1};
-        #variable {current_room} {$temp_room};
-        #showme <158>[地图] 地图采集已激活 (初始房间: $current_room);
+        #showme <158>[地图] 地图采集已激活;
         look
     };
-    #if {"$map_active" == "1" && "$current_room" != ""} {
+    #if {"$map_active" == "1" && "$room_uid" != ""} {
         #if {"$current_room_exits" != "" && "$current_room_exits_brief" == ""} {
             m_autosave;
             #variable {current_room_exits} {}
         };
-        m_flush_npcs {$current_room}
+        m_flush_npcs {$room_uid}
     }
 }
-
-; ============================================================
-; 地图系统命令
-; ============================================================
 
 #ALIAS map_info {
     #showme <178>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━;
     #showme <178>地图系统状态;
     #showme <178>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━;
-    #showme <138>  当前房间: $current_room;
+    #showme <138>  当前房间: $room_uid;
     #if {"$current_room_exits_brief" != ""} {
         #showme <138>  当前出口: $current_room_exits_brief
     } {
@@ -119,14 +154,12 @@
     #showme <178>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 }
 
-; 移动时自动记录边信息到 edges.txt
 #ALIAS m_record_edge {
-    #if {"$prev_room" != "" && "$prev_room" != "$current_room"} {
-        #line log {map_data/raw/edges.txt} {$prev_room|$prev_direction|$current_room}
+    #if {"$old_room" != "" && "$old_room" != "$room_uid"} {
+        #line log {map_data/raw/edges.txt} {$old_room|$prev_direction|$room_uid}
     }
 }
 
-; 切换房间前先把旧房间的 NPC 写盘
 #ALIAS m_flush_npcs {
     #if {"%1" != "" && &current_npcs[] > 0} {
         #system {rm -f map_data/raw/%1.npcs};
@@ -137,36 +170,36 @@
     }
 }
 
-; 自动保存房间原始数据
 #ALIAS m_autosave {
     m_record_edge;
-    #if {"$current_room" != ""} {
+    #if {"$room_uid" != ""} {
         #system {mkdir -p map_data/raw 2>/dev/null};
         #if {"$current_room_exits_brief" != ""} {
-            #system {echo "$current_room|$current_room_exits_brief" > map_data/raw/$current_room.exits}
+            #system {echo "$room_uid|$current_room_exits_brief" > map_data/raw/$room_uid.exits}
         } {
             #if {"$current_room_exits" != ""} {
-                #system {echo "$current_room|$current_room_exits" > map_data/raw/$current_room.exits}
+                #system {echo "$room_uid|$current_room_exits" > map_data/raw/$room_uid.exits}
             }
         }
     }
 }
 
-; 手动保存当前房间
 #ALIAS m_save {
-    #if {"$current_room" != ""} {
+    #if {"$room_uid" != ""} {
         #if {"$current_room_exits_brief" != ""} {
-            #system {echo "$current_room|$current_room_exits_brief" > map_data/raw/$current_room.exits}
+            #system {echo "$room_uid|$current_room_exits_brief" > map_data/raw/$room_uid.exits}
         } {
-            #system {echo "$current_room|$current_room_exits" > map_data/raw/$current_room.exits}
+            #if {"$current_room_exits" != ""} {
+                #system {echo "$room_uid|$current_room_exits" > map_data/raw/$room_uid.exits}
+            }
         };
-        m_flush_npcs {$current_room};
-        #showme <158>[地图] 已保存: $current_room
+        m_flush_npcs {$room_uid};
+        #showme <158>[地图] 已保存: $room_uid
     }
 }
 
 #ALIAS m_list {
-    #script {files} {ls map_data/raw/*.exits 2>/dev/null | wc -l || echo 0};
+    #script {files} {ls map_data/raw/ 2>/dev/null | grep -c '.exits$' || echo 0};
     #showme <138>[地图] 已保存 $files 个房间
 }
 
@@ -182,10 +215,10 @@
     #if {"%0" == ""} {
         #showme <118>用法: m_walk <目标房间>
     } {
-        #script {walk_result} {python3 map_data/map_navigator.py path "$current_room" "%0" 2>/dev/null || echo "ERROR"};
+        #script {walk_result} {python3 map_data/map_navigator.py path "$room_uid" "%0" 2>/dev/null || echo "ERROR"};
         #if {"$walk_result[1]" != "ERROR" && "$walk_result[1]" != "NO_PATH"} {
             #showme <158>[地图] 路线: $walk_result[1];
-            #script {walk_dirs} {python3 map_data/map_navigator.py dirs "$current_room" "%0" 2>/dev/null};
+            #script {walk_dirs} {python3 map_data/map_navigator.py dirs "$room_uid" "%0" 2>/dev/null};
             #variable {walk_steps} {$walk_dirs};
             #variable {walk_index} {1};
             m_walk_step
@@ -214,18 +247,17 @@
     }
 }
 
-; 移动时记录方向
 #ALIAS m_go {
     #variable {prev_direction} {%0};
     #send %0
 }
 
-#showme <158>[地图] 系统就绪
-#showme <138>[提示] 连接后输入 #mapper 加载地图捕获
-
-#ALIAS #mapper {
+#ALIAS mapper {
     look
 }
+
+#showme <158>[地图] 系统就绪
+#showme <138>[提示] 连接后输入 mapper 或 m_go 开始采集
 
 map_init
 login
