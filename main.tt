@@ -84,7 +84,8 @@
 
 #action {^{.+} -%s} {
     #if {"$map_active" == "1"} {
-        #variable {pending_room} {%1}
+        #variable {pending_room} {%1};
+        #variable {room_desc} {%s};
     };
     #showme <158>[地图] 房间: %1 (完整模式)
 }
