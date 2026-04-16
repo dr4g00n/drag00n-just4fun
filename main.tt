@@ -184,13 +184,57 @@
     }
 }
 
+#ALIAS m_gen_fingerprint {
+    #if {"$room_desc" != ""} {
+        #variable {fp} {};
+        
+        #if {"$room_desc" =~ "广场"} {
+            #format {fp} {%s 广场} {fp}
+        };
+        #if {"$room_desc" =~ "衙门"} {
+            #format {fp} {%s 衙门} {fp}
+        };
+        #if {"$room_desc" =~ "书院"} {
+            #format {fp} {%s 书院} {fp}
+        };
+        #if {"$room_desc" =~ "钱庄"} {
+            #format {fp} {%s 钱庄} {fp}
+        };
+        #if {"$room_desc" =~ "东大街"} {
+            #format {fp} {%s 东大街} {fp}
+        };
+        #if {"$room_desc" =~ "打铁铺"} {
+            #format {fp} {%s 打铁铺} {fp}
+        };
+        #if {"$room_desc" =~ "杂货铺"} {
+            #format {fp} {%s 杂货铺} {fp}
+        };
+        #if {"$room_desc" =~ "乐器店"} {
+            #format {fp} {%s 乐器店} {fp}
+        };
+        #if {"$fp" != ""} {
+            #showme <138>[地图] 描述指纹: $fp
+        };
+        #variable {room_fingerprint} {$fp}
+    }
+}
+
 #ALIAS m_save {
+    m_gen_fingerprint;
     #if {"$room_uid" != ""} {
         #if {"$current_room_exits_brief" != ""} {
-            #system {echo "$room_uid|$current_room_exits_brief" > map_data/raw/$room_uid.exits}
+            #if {"$room_fingerprint" != ""} {
+                #system {echo "$room_uid|$current_room_exits_brief|$room_fingerprint" > map_data/raw/$room_uid.exits"}
+            } {
+                #system {echo "$room_uid|$current_room_exits_brief" > map_data/raw/$room_uid.exits"}
+            }
         } {
             #if {"$current_room_exits" != ""} {
-                #system {echo "$room_uid|$current_room_exits" > map_data/raw/$room_uid.exits}
+                #if {"$room_fingerprint" != ""} {
+                    #system {echo "$room_uid|$current_room_exits|$room_fingerprint" > map_data/raw/$room_uid.exits"}
+                } {
+                    #system {echo "$room_uid|$current_room_exits" > map_data/raw/$room_uid.exits"}
+                }
             }
         };
         m_flush_npcs {$room_uid};

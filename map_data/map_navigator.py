@@ -41,29 +41,51 @@ DATA_DIR = SCRIPT_DIR
 
 
 def load_from_raw():
-    """从 raw 目录读取 tt++ 采集的原始数据"""
+    """从 raw 目录读取 tt++ 采集的原始数据
+    
+    支持两种格式：
+      旧格式：UID|出口列表
+      新格式：UID|出口列表|描述指纹
+    """
     rooms = {}
     npcs = defaultdict(list)
-
+    
     if not os.path.isdir(RAW_DIR):
         return rooms, npcs
-
+    
     for fname in os.listdir(RAW_DIR):
         fpath = os.path.join(RAW_DIR, fname)
-
+        
         if fname.endswith(".exits"):
             try:
                 with open(fpath, "r", encoding="utf-8") as f:
                     line = f.readline().strip()
                 if "|" in line:
-                    parts = line.split("|", 1)
+                    parts = line.split("|")
                     room_name = parts[0].strip()
-                    exits_str = parts[1].strip()
-                    exits = parse_exits(exits_str)
-                    rooms[room_name] = {"exits": exits, "file": fpath}
+                    
+                    if len(parts) == 2:
+                        # 旧格式：UID|出口列表
+                        exits_str = parts[1].strip()
+                        exits = parse_exits(exits_str)
+                        rooms[room_name] = {
+                            "exits": exits,
+                            "fingerprint": None,
+                            "file": fpath
+                        }
+                    elif len(parts) == 3:
+                        # 新格式：UID|出口列表|描述指纹
+                        exits_str = parts[1].strip()
+                        fingerprint = parts[2].strip()
+                        exits = parse_exits(exits_str)
+                        rooms[room_name] = {
+                            "exits": exits,
+                            "fingerprint": fingerprint,
+                            "file": fpath
+                        }
             except Exception:
                 pass
-
+        
         elif fname.endswith(".npcs"):
             room_name = fname[:-5]
             try:
@@ -74,7 +96,7 @@ def load_from_raw():
                             npcs[room_name].append(line)
             except Exception:
                 pass
-
+    
     return rooms, npcs
 
 
@@ -325,13 +347,130 @@ def cmd_list():
         info = graph[name]
         exits = ", ".join(info.get("exits", []))
         npc_count = len(info.get("npcs", []))
+        fingerprint = info.get("fingerprint")
+        
         line = f"  {name}"
         if exits:
             line += f"  [{exits}]"
         if npc_count:
             line += f"  NPC:{npc_count}"
+        if fingerprint:
+            line += f"  FP:{fingerprint}"
         print(line)
     print(f"共 {len(graph)} 个房间")
+
+def cmd_conflicts():
+    """检测房间冲突
+    
+    检测同名房间且出口列表相同的情况
+    """
+    rooms, npcs = load_from_raw()
+    
+    # 按（房间名 + 出口）分组
+    rooms_by_signature = {}
+    
+    for room_name, room_data in rooms.items():
+        base_name = re.sub(r'~\d+$', '', room_name)
+        exits = tuple(sorted(room_data.get("exits", [])))
+        fingerprint = room_data.get("fingerprint")
+        
+        signature = (base_name, exits)
+        
+        if signature not in rooms_by_signature:
+            rooms_by_signature[signature] = []
+        rooms_by_signature[signature].append({
+            "name": room_name,
+            "fingerprint": fingerprint
+        })
+    
+    # 检查冲突
+    conflicts = []
+    for signature, room_list in rooms_by_signature.items():
+        if len(room_list) > 1:
+            # 检查是否所有房间都有描述指纹
+            fingerprints = [r["fingerprint"] for r in room_list]
+            unique_fingerprints = set(f for f in fingerprints if f and f != "unknown")
+            
+            if len(unique_fingerprints) < len(room_list):
+                # 冲突：有房间没有唯一的描述指纹
+                conflicts.append({
+                    "base_name": signature[0],
+                    "exits": signature[1],
+                    "rooms": room_list,
+                    "unique_fingerprints": len(unique_fingerprints),
+                    "total_rooms": len(room_list)
+                })
+    
+    if not conflicts:
+        print("未检测到房间冲突")
+        return
+    
+    print(f"检测到 {len(conflicts)} 个房间冲突：")
+    for i, conflict in enumerate(conflicts, 1):
+        print(f"\n冲突 #{i}:")
+        print(f"  房间名: {conflict['base_name']}")
+        print(f"  出口列表: {', '.join(conflict['exits'])}")
+        print(f"  房间数量: {conflict['total_rooms']}")
+        print(f"  唯一指纹: {conflict['unique_fingerprints']}")
+        print(f"  详细信息:")
+        for room in conflict["rooms"]:
+            fp = room.get("fingerprint") or "无"
+            print(f"    - {room['name']}: FP={fp}")
+    
+    return conflicts
+
+def cmd_fingerprints():
+    """分析描述指纹统计信息"""
+    rooms, npcs = load_from_raw()
+    
+    fingerprint_stats = {}
+    fingerprint_details = {}
+    
+    for room_name, room_data in rooms.items():
+        fingerprint = room_data.get("fingerprint")
+        
+        if not fingerprint:
+            fingerprint = "无"
+        elif fingerprint == "unknown":
+            fingerprint = "未知"
+        
+        if fingerprint not in fingerprint_stats:
+            fingerprint_stats[fingerprint] = {
+                "count": 0,
+                "rooms": []
+            }
+        
+        fingerprint_stats[fingerprint]["count"] += 1
+        fingerprint_stats[fingerprint]["rooms"].append(room_name)
+    
+    print("描述指纹统计：")
+    print("=" * 60)
+    
+    # 按出现频率排序
+    sorted_fingerprints = sorted(fingerprint_stats.items(), key=lambda x: x[1]["count"], reverse=True)
+    
+    for fingerprint, stats in sorted_fingerprints:
+        print(f"\n{fingerprint} ({stats['count']} 个房间)")
+        if stats["count"] <= 5:
+            for room_name in stats["rooms"]:
+                print(f"  - {room_name}")
+        else:
+            print(f"  （房间数量较多，仅显示前 5 个）")
+            for room_name in stats["rooms"][:5]:
+                print(f"  - {room_name}")
+            if len(stats["rooms"]) > 5:
+                print(f"  ... 还有 {len(stats['rooms']) - 5} 个房间")
+    
+    # 统计摘要
+    total_rooms = len(rooms)
+    rooms_with_fingerprint = sum(1 for r in rooms.values() if r.get("fingerprint") and r["fingerprint"] != "unknown")
+    rooms_without_fingerprint = total_rooms - rooms_with_fingerprint
+    
+    print(f"\n统计摘要：")
+    print(f"  总房间数: {total_rooms}")
+    print(f"  有描述指纹: {rooms_with_fingerprint} ({rooms_with_fingerprint*100//total_rooms if total_rooms else 0}%)")
+    print(f"  无描述指纹: {rooms_without_fingerprint} ({rooms_without_fingerprint*100//total_rooms if total_rooms else 0}%)")
+    print(f"  唯一指纹数: {len(fingerprint_stats)}")
 
 
 def main():
@@ -342,40 +481,48 @@ def main():
         print("  npc <关键词>        查找 NPC")
         print("  unvisited           未完全探索的房间")
         print("  list                列出所有房间")
+        print("  conflicts           检测房间冲突")
+        print("  fingerprints        分析描述指纹")
         sys.exit(1)
-
+    
     command = sys.argv[1]
-
+    
     if command == "path":
         if len(sys.argv) < 4:
             print("用法: map_navigator.py path <起点> <终点>")
             sys.exit(1)
         cmd_path(sys.argv[2], sys.argv[3])
-
+    
     elif command == "dirs":
         if len(sys.argv) < 4:
             print("用法: map_navigator.py dirs <起点> <终点>")
             sys.exit(1)
         cmd_dirs(sys.argv[2], sys.argv[3])
-
+    
     elif command == "walk":
         if len(sys.argv) < 4:
             print("用法: map_navigator.py walk <起点> <终点>")
             sys.exit(1)
         cmd_walk(sys.argv[2], sys.argv[3])
-
+    
     elif command == "npc":
         if len(sys.argv) < 3:
             print("用法: map_navigator.py npc <关键词>")
             sys.exit(1)
         cmd_npc(sys.argv[2])
-
+    
     elif command == "unvisited":
         cmd_unvisited()
-
+    
     elif command == "list":
         cmd_list()
-
+    
+    elif command == "conflicts":
+        cmd_conflicts()
+    
+    elif command == "fingerprints":
+        cmd_fingerprints()
+    
     else:
         print(f"未知命令: {command}")
         sys.exit(1)
