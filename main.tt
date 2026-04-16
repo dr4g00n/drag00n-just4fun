@@ -203,6 +203,15 @@
         #if {"$room_desc" =~ "东大街"} {
             #format {fp} {%s 东大街} {fp}
         };
+        #if {"$room_desc" =~ "西大街"} {
+            #format {fp} {%s 西大街} {fp}
+        };
+        #if {"$room_desc" =~ "北大街"} {
+            #format {fp} {%s 北大街} {fp}
+        };
+        #if {"$room_desc" =~ "南大街"} {
+            #format {fp} {%s 南大街} {fp}
+        };
         #if {"$room_desc" =~ "打铁铺"} {
             #format {fp} {%s 打铁铺} {fp}
         };
@@ -211,6 +220,36 @@
         };
         #if {"$room_desc" =~ "乐器店"} {
             #format {fp} {%s 乐器店} {fp}
+        };
+        #if {"$room_desc" =~ "客栈"} {
+            #format {fp} {%s 客栈} {fp}
+        };
+        #if {"$room_desc" =~ "药铺"} {
+            #format {fp} {%s 药铺} {fp}
+        };
+        #if {"$room_desc" =~ "镖局"} {
+            #format {fp} {%s 镖局} {fp}
+        };
+        #if {"$room_desc" =~ "酒楼"} {
+            #format {fp} {%s 酒楼} {fp}
+        };
+        #if {"$room_desc" =~ "茶亭"} {
+            #format {fp} {%s 茶亭} {fp}
+        };
+        #if {"$room_desc" =~ "渡口"} {
+            #format {fp} {%s 渡口} {fp}
+        };
+        #if {"$room_desc" =~ "汉水"} {
+            #format {fp} {%s 汉水} {fp}
+        };
+        #if {"$room_desc" =~ "武当"} {
+            #format {fp} {%s 武当} {fp}
+        };
+        #if {"$room_desc" =~ "玄岳门"} {
+            #format {fp} {%s 玄岳门} {fp}
+        };
+        #if {"$room_desc" =~ "道童"} {
+            #format {fp} {%s 道童} {fp}
         };
         #if {"$fp" != ""} {
             #showme <138>[地图] 描述指纹: $fp
