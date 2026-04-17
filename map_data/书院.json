@@ -1,0 +1,15 @@
+{
+  "room": "书院",
+  "exits": [
+    "south",
+    "up"
+  ],
+  "edges": {
+    "south": "东大街"
+  },
+  "npcs": [
+    "明教教主亲传弟子「做菜在洪七公」有点甜(Yuanjiu)",
+    "学童(Xue tong)",
+    "顾炎武(Gu yanwu)"
+  ]
+}

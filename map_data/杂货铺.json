@@ -1,0 +1,10 @@
+{
+  "room": "杂货铺",
+  "exits": [
+    "north"
+  ],
+  "edges": {
+    "north": "东大街~1"
+  },
+  "npcs": []
+}

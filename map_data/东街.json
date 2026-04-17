@@ -1,0 +1,12 @@
+{
+  "room": "东街",
+  "exits": [
+    "east",
+    "north",
+    "west"
+  ],
+  "edges": {},
+  "npcs": [
+    "明教教主亲传弟子「做菜在洪七公」本辉(Wangdwys)"
+  ]
+}

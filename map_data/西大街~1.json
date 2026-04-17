@@ -1,0 +1,11 @@
+{
+  "room": "西大街~1",
+  "exits": [
+    "east",
+    "west"
+  ],
+  "edges": {},
+  "npcs": [
+    "丐帮帮众 青年乞丐(Qi gai)"
+  ]
+}

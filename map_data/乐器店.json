@@ -1,0 +1,15 @@
+{
+  "room": "乐器店",
+  "exits": [
+    "east",
+    "north",
+    "south"
+  ],
+  "edges": {
+    "south": "品棋亭",
+    "north": "东大街~1"
+  },
+  "npcs": [
+    "萧老板(Xiao laoban)"
+  ]
+}

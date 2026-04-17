@@ -1,0 +1,10 @@
+{
+  "room": "北街",
+  "exits": [
+    "north",
+    "south",
+    "west"
+  ],
+  "edges": {},
+  "npcs": []
+}

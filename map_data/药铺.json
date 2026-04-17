@@ -1,0 +1,13 @@
+{
+  "room": "药铺",
+  "exits": [
+    "south"
+  ],
+  "edges": {
+    "south": "东大街"
+  },
+  "npcs": [
+    "药铺老板(Yaopu laoban)",
+    "药铺伙计(Yaopu huoji)"
+  ]
+}

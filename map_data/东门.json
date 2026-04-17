@@ -1,0 +1,19 @@
+{
+  "room": "东门",
+  "exits": [
+    "east",
+    "north",
+    "northeast",
+    "south",
+    "west"
+  ],
+  "edges": {
+    "north": "龙门镖局",
+    "west": "东大街"
+  },
+  "npcs": [
+    "武将(Wu jiang)",
+    "二位官兵(Guan bing)",
+    "趟子手(Tangzi shou)"
+  ]
+}

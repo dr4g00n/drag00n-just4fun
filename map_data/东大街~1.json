@@ -1,0 +1,17 @@
+{
+  "room": "东大街~1",
+  "exits": [
+    "east",
+    "north",
+    "south",
+    "southeast",
+    "west"
+  ],
+  "edges": {
+    "west": "东大街",
+    "south": "乐器店"
+  },
+  "npcs": [
+    "穷汉(Qiong han)"
+  ]
+}

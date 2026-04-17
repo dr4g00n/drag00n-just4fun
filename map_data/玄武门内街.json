@@ -1,0 +1,12 @@
+{
+  "room": "玄武门内街",
+  "exits": [
+    "east",
+    "north",
+    "south"
+  ],
+  "edges": {},
+  "npcs": [
+    "二位官兵(Guan bing)"
+  ]
+}

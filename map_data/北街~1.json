@@ -1,0 +1,13 @@
+{
+  "room": "北街~1",
+  "exits": [
+    "east",
+    "north",
+    "south"
+  ],
+  "edges": {},
+  "npcs": [
+    "腐烂的男尸(Nan shi)",
+    "丐帮第二十代帮主 耶律齐(Yelv qi)"
+  ]
+}

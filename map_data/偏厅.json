@@ -1,0 +1,17 @@
+{
+  "room": "偏厅",
+  "exits": [
+    "west"
+  ],
+  "edges": {
+    "west": "宝昌客栈"
+  },
+  "npcs": [
+    "公西虹的尸体(Corpse)",
+    "施惠红的尸体(Corpse)",
+    "赵敏(Zhao min)",
+    "玄冥二老 鹤笔翁(He biweng)",
+    "徐霞客(Xu xiake)",
+    "玄冥二老 鹿杖客(Lu zhangke)"
+  ]
+}

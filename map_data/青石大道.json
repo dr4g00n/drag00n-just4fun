@@ -1,0 +1,11 @@
+{
+  "room": "青石大道",
+  "exits": [
+    "east",
+    "west"
+  ],
+  "edges": {},
+  "npcs": [
+    "采花贼(Caihua zei)"
+  ]
+}

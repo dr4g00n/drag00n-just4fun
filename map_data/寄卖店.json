@@ -1,0 +1,15 @@
+{
+  "room": "寄卖店",
+  "exits": [
+    "north",
+    "west"
+  ],
+  "edges": {
+    "west": "陈列室",
+    "north": "东大街"
+  },
+  "npcs": [
+    "掌柜(Zhang gui)",
+    "「算命先生」李半仙(Li banxian)"
+  ]
+}

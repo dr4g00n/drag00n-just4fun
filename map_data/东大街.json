@@ -1,0 +1,18 @@
+{
+  "room": "东大街",
+  "exits": [
+    "east",
+    "north",
+    "south",
+    "west"
+  ],
+  "edges": {
+    "north": "打铁铺",
+    "west": "东大街~1",
+    "south": "广场东",
+    "east": "东门"
+  },
+  "npcs": [
+    "妙手神丐 空空儿(Kong kong)"
+  ]
+}

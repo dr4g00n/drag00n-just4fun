@@ -1,0 +1,13 @@
+{
+  "room": "广场南",
+  "exits": [
+    "east",
+    "north",
+    "south",
+    "west"
+  ],
+  "edges": {
+    "east": "东大街~1"
+  },
+  "npcs": []
+}

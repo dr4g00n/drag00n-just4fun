@@ -1,0 +1,12 @@
+{
+  "room": "品棋亭",
+  "exits": [
+    "north"
+  ],
+  "edges": {
+    "north": "乐器店"
+  },
+  "npcs": [
+    "公子哥儿(Gong zi)"
+  ]
+}

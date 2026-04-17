@@ -1,0 +1,13 @@
+{
+  "room": "天阁斋",
+  "exits": [
+    "east"
+  ],
+  "edges": {
+    "east": "北大街"
+  },
+  "npcs": [
+    "钱庄老板「千金万银进自来」钱缝(Qian feng)",
+    "打手(Da shou)"
+  ]
+}

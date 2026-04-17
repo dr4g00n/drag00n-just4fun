@@ -1,0 +1,13 @@
+{
+  "room": "龙门镖局",
+  "exits": [
+    "south"
+  ],
+  "edges": {
+    "south": "东门"
+  },
+  "npcs": [
+    "总镖头(Zong biaotou)",
+    "趟子手(Tangzi shou)"
+  ]
+}

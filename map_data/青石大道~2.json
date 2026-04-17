@@ -1,0 +1,12 @@
+{
+  "room": "青石大道~2",
+  "exits": [
+    "north",
+    "northeast",
+    "south"
+  ],
+  "edges": {},
+  "npcs": [
+    "披星戴月「武当任务长沙城南正街」披星真人(Coco)"
+  ]
+}

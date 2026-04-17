@@ -1,0 +1,19 @@
+{
+  "room": "宝昌客栈",
+  "exits": [
+    "east",
+    "up",
+    "west"
+  ],
+  "edges": {
+    "east": "偏厅",
+    "west": "北大街"
+  },
+  "npcs": [
+    "书剑半仙「无所不知」万事通(Wanshi tong)",
+    "窦坤(Dou kun)",
+    "店小二(Xiao er)",
+    "徐霞客(Xu xiake)",
+    "丐帮帮众 中年乞丐(Qi gai)"
+  ]
+}

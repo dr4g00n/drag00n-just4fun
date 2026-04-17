@@ -1,0 +1,12 @@
+{
+  "room": "西郊",
+  "exits": [
+    "east",
+    "northwest",
+    "west"
+  ],
+  "edges": {},
+  "npcs": [
+    "张普(Zhang pu)"
+  ]
+}

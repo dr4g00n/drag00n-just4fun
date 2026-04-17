@@ -1,0 +1,12 @@
+{
+  "room": "山脚下",
+  "exits": [
+    "east",
+    "southeast",
+    "west"
+  ],
+  "edges": {},
+  "npcs": [
+    "二只野兔(Ye tu)"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "room": "打铁铺",
+  "exits": [
+    "south"
+  ],
+  "edges": {
+    "south": "东大街"
+  },
+  "npcs": [
+    "铁匠(Tiejiang)"
+  ]
+}

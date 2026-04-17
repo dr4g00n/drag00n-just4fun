@@ -1,0 +1,11 @@
+{
+  "room": "茶亭",
+  "exits": [
+    "northwest"
+  ],
+  "edges": {},
+  "npcs": [
+    "山村一枝花 桃花姑娘(Tao hua)",
+    "五碟水蜜桃(Mi tao)"
+  ]
+}

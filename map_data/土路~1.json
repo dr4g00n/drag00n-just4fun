@@ -1,0 +1,13 @@
+{
+  "room": "土路~1",
+  "exits": [
+    "northeast",
+    "northwest",
+    "south",
+    "west"
+  ],
+  "edges": {},
+  "npcs": [
+    "黑衣大盗(Heiyi dadao)"
+  ]
+}
